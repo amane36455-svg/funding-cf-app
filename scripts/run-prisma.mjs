@@ -1,6 +1,10 @@
-import './load-env';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+
+import { config } from 'dotenv';
+
+config({ path: '.env.local' });
+config({ path: '.env' });
 
 const require = createRequire(import.meta.url);
 const prismaCliPath = require.resolve('prisma/build/index.js');
