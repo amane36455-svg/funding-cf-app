@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  email        String        @unique
+  name         String?
+  passwordHash String        @map("password_hash")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  memberships  UserCompany[]
+  companies    Company[]     @relation("CompanyOwner")
+  documents    GeneratedDocument[]
+
+  @@map("users")
+}
+
+model Company {
+  id               String              @id @default(uuid()) @db.Uuid
+  name             String
+  ownerUserId      String              @map("owner_user_id") @db.Uuid
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  owner            User                @relation("CompanyOwner", fields: [ownerUserId], references: [id])
+  memberships      UserCompany[]
+  mfConnection     MfConnection?
+  mfAccounts       MfAccount[]
+  mfJournals       MfJournal[]
+  mfJournalDetails MfJournalDetail[]
+  cfRules          CfClassificationRule[]
+  cfResults        CfClassificationResult[]
+  documents        GeneratedDocument[]
+  syncHistories    MfSyncHistory[]
+
+  @@map("companies")
+}
+
+enum CompanyRole {
+  OWNER
+  MEMBER
+}
+
+model UserCompany {
+  userId    String      @map("user_id") @db.Uuid
+  companyId String      @map("company_id") @db.Uuid
+  role      CompanyRole @default(MEMBER)
+  createdAt DateTime    @default(now()) @map("created_at")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, companyId])
+  @@index([companyId])
+  @@map("user_companies")
+}
+
+model MfConnection {
+  id              String    @id @default(uuid()) @db.Uuid
+  companyId       String    @unique @map("company_id") @db.Uuid
+  mfOfficeId      String?   @map("mf_office_id")
+  accessTokenEnc  Bytes     @map("access_token_enc")
+  refreshTokenEnc Bytes     @map("refresh_token_enc")
+  tokenExpiresAt  DateTime  @map("token_expires_at")
+  scope           String?
+  lastSyncedAt    DateTime? @map("last_synced_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("mf_connections")
+}
+
+model MfAccount {
+  id          String            @id @default(uuid()) @db.Uuid
+  companyId   String            @map("company_id") @db.Uuid
+  mfAccountId String            @map("mf_account_id")
+  name        String
+  category    String?
+  subCategory String?           @map("sub_category")
+  excise      String?
+  rawJson     Json              @map("raw_json")
+  updatedAtMf DateTime?         @map("updated_at_mf")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  details     MfJournalDetail[]
+
+  @@unique([companyId, mfAccountId])
+  @@index([companyId, name])
+  @@map("mf_accounts")
+}
+
+model MfJournal {
+  id          String            @id @default(uuid()) @db.Uuid
+  companyId   String            @map("company_id") @db.Uuid
+  mfJournalId String            @map("mf_journal_id")
+  issueDate   DateTime          @map("issue_date") @db.Date
+  slipNumber  String?           @map("slip_number")
+  description String?
+  tagNames    String[]          @map("tag_names")
+  totalAmount BigInt            @map("total_amount")
+  rawJson     Json              @map("raw_json")
+  updatedAtMf DateTime?         @map("updated_at_mf")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  details     MfJournalDetail[]
+
+  @@unique([companyId, mfJournalId])
+  @@index([companyId, issueDate])
+  @@map("mf_journals")
+}
+
+model MfJournalDetail {
+  id             String                  @id @default(uuid()) @db.Uuid
+  companyId      String                  @map("company_id") @db.Uuid
+  journalId      String                  @map("journal_id") @db.Uuid
+  mfDetailId     String                  @map("mf_detail_id")
+  side           String
+  accountId      String?                 @map("account_id") @db.Uuid
+  subAccountName String?                 @map("sub_account_name")
+  amount         BigInt
+  taxAmount      BigInt?                 @map("tax_amount")
+  description    String?
+  rawJson        Json                    @map("raw_json")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+  company        Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  journal        MfJournal               @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  account        MfAccount?              @relation(fields: [accountId], references: [id])
+  cfResult       CfClassificationResult?
+
+  @@unique([companyId, mfDetailId])
+  @@index([companyId, journalId])
+  @@index([companyId, accountId])
+  @@map("mf_journal_details")
+}
+
+model CfClassificationRule {
+  id         String                   @id @default(uuid()) @db.Uuid
+  companyId  String?                  @map("company_id") @db.Uuid
+  priority   Int                      @default(100)
+  matchType  String                   @map("match_type")
+  matchValue String                   @map("match_value")
+  cfCategory String                   @map("cf_category")
+  cfGroup    String                   @map("cf_group")
+  isPersonal Boolean                  @default(false) @map("is_personal")
+  enabled    Boolean                  @default(true)
+  createdAt  DateTime                 @default(now()) @map("created_at")
+  updatedAt  DateTime                 @updatedAt @map("updated_at")
+  company    Company?                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  results    CfClassificationResult[]
+
+  @@index([companyId, enabled, priority])
+  @@map("cf_classification_rules")
+}
+
+model CfClassificationResult {
+  id                 String                @id @default(uuid()) @db.Uuid
+  companyId          String                @map("company_id") @db.Uuid
+  journalDetailId    String                @unique @map("journal_detail_id") @db.Uuid
+  cfCategory         String                @map("cf_category")
+  cfGroup            String                @map("cf_group")
+  isPersonal         Boolean               @default(false) @map("is_personal")
+  needsReview        Boolean               @default(false) @map("needs_review")
+  appliedRuleId      String?               @map("applied_rule_id") @db.Uuid
+  reason             String?
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  company            Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  journalDetail      MfJournalDetail       @relation(fields: [journalDetailId], references: [id], onDelete: Cascade)
+  appliedRule        CfClassificationRule? @relation(fields: [appliedRuleId], references: [id])
+
+  @@index([companyId, needsReview])
+  @@index([companyId, cfGroup])
+  @@map("cf_classification_results")
+}
+
+model GeneratedDocument {
+  id           String   @id @default(uuid()) @db.Uuid
+  companyId    String   @map("company_id") @db.Uuid
+  kind         String
+  status       String   @default("draft")
+  inputsJson   Json     @map("inputs_json")
+  snapshotJson Json     @map("snapshot_json")
+  bodyMarkdown String   @map("body_markdown") @db.Text
+  model        String?
+  createdById  String   @map("created_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy    User     @relation(fields: [createdById], references: [id])
+
+  @@index([companyId, createdAt])
+  @@map("generated_documents")
+}
+
+model MfSyncHistory {
+  id               String    @id @default(uuid()) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  kind             String
+  status           String
+  startedAt        DateTime  @default(now()) @map("started_at")
+  finishedAt       DateTime? @map("finished_at")
+  targetRangeFrom  DateTime? @map("target_range_from") @db.Date
+  targetRangeTo    DateTime? @map("target_range_to") @db.Date
+  journalsUpserted Int       @default(0) @map("journals_upserted")
+  detailsUpserted  Int       @default(0) @map("details_upserted")
+  errorJson        Json?     @map("error_json")
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, startedAt])
+  @@map("mf_sync_history")
+}
