@@ -28,8 +28,12 @@ pnpm build
 2. Set framework preset to Next.js.
 3. Add environment variables from `.env.example`.
    - For Supabase/Vercel, use `.env.supabase.example` as the safer starting point.
-4. Set `CRON_SECRET` to a random value of at least 16 characters.
-5. Deploy.
+4. Set `TOKEN_ENCRYPTION_KEY` to standard base64 that decodes to exactly 32 random bytes.
+   - Generate it locally with `pnpm gen:key`.
+   - Paste only the value after `TOKEN_ENCRYPTION_KEY=` into Vercel.
+   - Do not use hex, a raw 32-character string, or a committed `.env` value.
+5. Set `CRON_SECRET` to a random value of at least 16 characters.
+6. Deploy.
 
 ## 3. Cron
 

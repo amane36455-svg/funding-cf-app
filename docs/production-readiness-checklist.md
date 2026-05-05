@@ -5,7 +5,7 @@
 - `DATABASE_URL` is Supabase transaction pooler URL.
 - `DIRECT_URL` is direct/session URL for migrations.
 - `NEXTAUTH_SECRET` is set.
-- `TOKEN_ENCRYPTION_KEY` is 32-byte base64 and backed up securely.
+- `TOKEN_ENCRYPTION_KEY` is standard base64 that decodes to exactly 32 random bytes, generated with `pnpm gen:key`, and backed up securely.
 - `MF_CLIENT_ID` and `MF_CLIENT_SECRET` are set.
 - `MF_REDIRECT_URI` exactly matches MF developer console.
 - `CRON_SECRET` is at least 16 characters.

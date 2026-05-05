@@ -32,6 +32,13 @@ const productionNoLocalhostUrls = [
   'NEXT_PUBLIC_APP_URL',
   'MF_REDIRECT_URI',
 ];
+const tokenEncryptionKeyMessage =
+  'TOKEN_ENCRYPTION_KEY must be standard base64 for exactly 32 random bytes. Generate it with `pnpm gen:key`, register only the value after `TOKEN_ENCRYPTION_KEY=`, and do not use hex or a raw 32-character string.';
+
+function isBase64Encoded32ByteKey(value) {
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(value)) return false;
+  return Buffer.from(value, 'base64').length === 32;
+}
 
 let failed = false;
 
@@ -44,9 +51,8 @@ for (const key of isProductionCheck ? [...required, ...productionRequired] : req
 
 const tokenKey = process.env.TOKEN_ENCRYPTION_KEY;
 if (tokenKey) {
-  const keyBytes = Buffer.from(tokenKey, 'base64').length;
-  if (keyBytes !== 32) {
-    console.error('TOKEN_ENCRYPTION_KEY must decode to 32 bytes');
+  if (!isBase64Encoded32ByteKey(tokenKey)) {
+    console.error(tokenEncryptionKeyMessage);
     failed = true;
   }
 }

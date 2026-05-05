@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
 const testTokenKey = 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=';
+const tokenEncryptionKeyMessage =
+  'TOKEN_ENCRYPTION_KEY must be standard base64 for exactly 32 random bytes; generate it with pnpm gen:key, and do not use hex or a raw 32-character string';
+
+function isBase64Encoded32ByteKey(value: string): boolean {
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(value)) return false;
+  return Buffer.from(value, 'base64').length === 32;
+}
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -15,13 +22,7 @@ const EnvSchema = z.object({
       if (process.env.NODE_ENV === 'test') return testTokenKey;
       return '';
     })
-    .refine((value) => {
-      try {
-        return Buffer.from(value, 'base64').length === 32;
-      } catch {
-        return false;
-      }
-    }, 'TOKEN_ENCRYPTION_KEY must decode to 32 bytes'),
+    .refine(isBase64Encoded32ByteKey, tokenEncryptionKeyMessage),
   MF_CLIENT_ID: z.string().optional(),
   MF_CLIENT_SECRET: z.string().optional(),
   MF_REDIRECT_URI: z.string().url().optional(),

@@ -8,7 +8,7 @@ const AUTH_TAG_LENGTH = 16;
 function getKey(): Buffer {
   const key = Buffer.from(env.TOKEN_ENCRYPTION_KEY, 'base64');
   if (key.length !== 32) {
-    throw new Error('TOKEN_ENCRYPTION_KEY must decode to exactly 32 bytes');
+    throw new Error('TOKEN_ENCRYPTION_KEY must decode to exactly 32 bytes from standard base64');
   }
   return key;
 }
