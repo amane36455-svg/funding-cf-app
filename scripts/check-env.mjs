@@ -8,8 +8,8 @@ const isProductionCheck =
   process.argv.includes('--production') || process.env.CHECK_ENV_TARGET === 'production';
 
 const required = [
-  'DATABASE_URL',
-  'DIRECT_URL',
+ 'APP_DATABASE_URL',
+'APP_DIRECT_URL',
   'NEXTAUTH_SECRET',
   'TOKEN_ENCRYPTION_KEY',
   'MF_CLIENT_ID',
@@ -26,8 +26,8 @@ const productionRequired = ['NEXTAUTH_URL', 'NEXT_PUBLIC_APP_URL'];
 const placeholderPattern = /replace_me|dummy|local_development|your-|example\.com|password/i;
 const productionHttpsUrls = ['NEXTAUTH_URL', 'NEXT_PUBLIC_APP_URL', 'MF_REDIRECT_URI'];
 const productionNoLocalhostUrls = [
-  'DATABASE_URL',
-  'DIRECT_URL',
+  'APP_DATABASE_URL',
+'APP_DIRECT_URL',
   'NEXTAUTH_URL',
   'NEXT_PUBLIC_APP_URL',
   'MF_REDIRECT_URI',
