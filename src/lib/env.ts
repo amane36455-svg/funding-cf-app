@@ -12,6 +12,8 @@ function isBase64Encoded32ByteKey(value: string): boolean {
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   NEXTAUTH_SECRET: z.string().min(32).optional(),
+  APP_DATABASE_URL: z.string().optional(),
+  APP_DIRECT_URL: z.string().optional(),
   DATABASE_URL: z.string().optional(),
   DIRECT_URL: z.string().optional(),
   TOKEN_ENCRYPTION_KEY: z
