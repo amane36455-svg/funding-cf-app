@@ -4,8 +4,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function inspectDatabaseUrl() {
-  const raw = process.env.DATABASE_URL;
-
+  const raw = process.env.APP_DATABASE_URL;
   if (!raw) {
     return {
       hostname: null,
