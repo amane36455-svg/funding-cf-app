@@ -75,6 +75,8 @@ body:
           required: true
         - label: シニア税理士S 鈴木 弘の確認が必要な事項を明記する
           required: true
+        - label: 対象ロジックが companyId スコープで動作することを確認した
+          required: true
         - label: secret/token/API key を含めていない
           required: true
   - type: textarea
