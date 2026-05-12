@@ -3,6 +3,12 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
+import {
+  resolveCurrentCompanyId,
+  userCompanyAccessWhere,
+  type AppRole,
+  type CompanyMembershipScope,
+} from '@/lib/auth/company-scope';
 
 export const authOptions: NextAuthOptions = {
   secret: env.NEXTAUTH_SECRET,
@@ -34,10 +40,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.userId = user.id;
-        const membership = await prisma.userCompany.findFirst({
-          where: { userId: user.id },
-          orderBy: { createdAt: 'asc' },
-        });
+        const membership = await resolveMembershipForToken(user.id);
         token.currentCompanyId = membership?.companyId ?? null;
         token.role = membership?.role ?? null;
       }
@@ -45,14 +48,7 @@ export const authOptions: NextAuthOptions = {
       if (trigger === 'update' && token.userId && session) {
         const requested = session as { currentCompanyId?: string | null };
         if (requested.currentCompanyId) {
-          const membership = await prisma.userCompany.findUnique({
-            where: {
-              userId_companyId: {
-                userId: token.userId,
-                companyId: requested.currentCompanyId,
-              },
-            },
-          });
+          const membership = await resolveMembershipForToken(token.userId, requested.currentCompanyId);
           if (membership) {
             token.currentCompanyId = membership.companyId;
             token.role = membership.role;
@@ -70,3 +66,48 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+async function resolveMembershipForToken(userId: string, requestedCompanyId?: string | null) {
+  const [memberships, preference] = await Promise.all([
+    prisma.userCompany.findMany({
+      where: { userId },
+      orderBy: [{ lastAccessedAt: 'desc' }, { createdAt: 'asc' }],
+    }),
+    prisma.userPreference.findUnique({ where: { userId } }),
+  ]);
+
+  const scopedMemberships: CompanyMembershipScope[] = memberships.map((membership) => ({
+    companyId: membership.companyId,
+    role: membership.role as AppRole,
+    createdAt: membership.createdAt,
+    lastAccessedAt: membership.lastAccessedAt,
+  }));
+  const currentCompanyId = resolveCurrentCompanyId({
+    requestedCompanyId,
+    preferredCompanyId: preference?.currentCompanyId,
+    memberships: scopedMemberships,
+  });
+
+  if (!currentCompanyId) return null;
+
+  const membership = memberships.find((item) => item.companyId === currentCompanyId);
+  if (!membership) return null;
+
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.userPreference.upsert({
+      where: { userId },
+      create: { userId, currentCompanyId },
+      update: { currentCompanyId },
+    }),
+    prisma.userCompany.update({
+      where: userCompanyAccessWhere(userId, currentCompanyId),
+      data: { lastAccessedAt: now },
+    }),
+  ]);
+
+  return {
+    companyId: membership.companyId,
+    role: membership.role as AppRole,
+  };
+}
