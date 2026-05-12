@@ -66,23 +66,24 @@ export async function POST(request: Request) {
   const name = body?.name?.trim();
   if (!name) return fail('INVALID_COMPANY', '会社名を入力してください', 400);
 
-  const fiscalMonth = normalizeFiscalMonth(body.fiscalMonth);
+  const fiscalMonth = normalizeFiscalMonth(body?.fiscalMonth);
   if (fiscalMonth === 'invalid') {
     return fail('INVALID_FISCAL_MONTH', '決算月は1から12で入力してください', 400);
   }
 
-  const status = body.status && COMPANY_STATUSES.has(body.status) ? body.status : 'active';
+  const statusValue = body?.status ?? null;
+  const status = statusValue && COMPANY_STATUSES.has(statusValue) ? statusValue : 'active';
   const now = new Date();
   const company = await prisma.$transaction(async (tx) => {
     const created = await tx.company.create({
       data: {
         name,
         ownerUserId: session.user.id,
-        companyType: normalizeText(body.companyType),
+        companyType: normalizeText(body?.companyType),
         status,
         fiscalMonth,
-        industry: normalizeText(body.industry),
-        memo: normalizeText(body.memo),
+        industry: normalizeText(body?.industry),
+        memo: normalizeText(body?.memo),
       },
     });
     await tx.userCompany.create({
