@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/options';
-import { roleLabel, userCompanyAccessWhere } from '@/lib/auth/company-scope';
+import { roleLabel, userCompanyAccessWhere, type AppRole } from '@/lib/auth/company-scope';
 import { prisma } from '@/lib/db/prisma';
 import { fail, ok } from '@/lib/http/apiResponse';
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     companyId: membership.companyId,
     companyName: membership.company.name,
     role: membership.role,
-    roleLabel: roleLabel(membership.role),
+    roleLabel: roleLabel(membership.role as AppRole),
     lastAccessedAt: now,
   });
 }
