@@ -15,8 +15,8 @@ describe('check-env production mode', () => {
           PATH: process.env.PATH,
           SystemRoot: process.env.SystemRoot,
           NODE_ENV: 'test',
-          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/funding_cf',
-          DIRECT_URL: 'postgresql://postgres:postgres@localhost:5432/funding_cf',
+          APP_DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/funding_cf',
+          APP_DIRECT_URL: 'postgresql://postgres:postgres@localhost:5432/funding_cf',
           NEXTAUTH_SECRET: 'local_development_nextauth_secret_please_replace',
           TOKEN_ENCRYPTION_KEY: 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
           MF_CLIENT_ID: 'local_dummy_client_id',
@@ -37,7 +37,7 @@ describe('check-env production mode', () => {
     expect(output).toContain('NEXTAUTH_URL');
     expect(output).toContain('NEXT_PUBLIC_APP_URL');
     expect(output).toContain('NEXTAUTH_SECRET must not use a placeholder');
-    expect(output).toContain('DATABASE_URL must not point at localhost');
+    expect(output).toContain('APP_DATABASE_URL must not point at localhost');
     expect(output).toContain('MF_REDIRECT_URI must use https://');
   });
 
@@ -48,9 +48,9 @@ describe('check-env production mode', () => {
         PATH: process.env.PATH,
         SystemRoot: process.env.SystemRoot,
         NODE_ENV: 'test',
-        DATABASE_URL:
+        APP_DATABASE_URL:
           'postgresql://postgres.project-ref:secret@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres',
-        DIRECT_URL: 'postgresql://postgres:secret@db.project-ref.supabase.co:5432/postgres',
+        APP_DIRECT_URL: 'postgresql://postgres:secret@db.project-ref.supabase.co:5432/postgres',
         NEXTAUTH_URL: 'https://funding-cf.example.jp',
         NEXT_PUBLIC_APP_URL: 'https://funding-cf.example.jp',
         NEXTAUTH_SECRET: 'prod_nextauth_secret_32_chars_minimum',
@@ -79,9 +79,9 @@ describe('check-env production mode', () => {
           PATH: process.env.PATH,
           SystemRoot: process.env.SystemRoot,
           NODE_ENV: 'test',
-          DATABASE_URL:
+          APP_DATABASE_URL:
             'postgresql://postgres.project-ref:secret@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres',
-          DIRECT_URL: 'postgresql://postgres:secret@db.project-ref.supabase.co:5432/postgres',
+          APP_DIRECT_URL: 'postgresql://postgres:secret@db.project-ref.supabase.co:5432/postgres',
           NEXTAUTH_URL: 'https://funding-cf.example.jp',
           NEXT_PUBLIC_APP_URL: 'https://funding-cf.example.jp',
           NEXTAUTH_SECRET: 'prod_nextauth_secret_32_chars_minimum',
