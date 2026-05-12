@@ -1,0 +1,79 @@
+name: Bug report
+description: 不具合や回帰を報告する
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Funding CF App の不具合報告テンプレートです。
+        個人情報、APIキー、トークン、秘密情報は記載しないでください。
+  - type: input
+    id: notion_task_url
+    attributes:
+      label: NotionタスクURL
+      placeholder: https://www.notion.so/...
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きているかを簡潔に記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+    validations:
+      required: true
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: affected_scope
+    attributes:
+      label: 影響範囲
+      description: 画面、API、DB、会社データ、同期、PDFなどの影響範囲を記載してください。
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重要度
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 証跡
+      description: スクリーンショット、ログの要約、エラーメッセージを記載してください。秘密情報はマスクしてください。
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 確認事項
+      options:
+        - label: secret/token/API key を本文や証跡に含めていない
+          required: true
+        - label: 個人情報や機密情報をマスクしている
+          required: true
+        - label: companyIdを跨いだデータ混在の可能性を確認する
+          required: true

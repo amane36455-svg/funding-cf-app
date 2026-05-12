@@ -1,0 +1,86 @@
+name: Accounting logic review
+description: 税務・会計ロジックの確認依頼を登録する
+title: "[Accounting Review]: "
+labels:
+  - accounting
+  - review
+body:
+  - type: markdown
+    attributes:
+      value: |
+        税務・会計ロジックの確認依頼テンプレートです。
+        AIの出力は補助情報であり、税務判断は断定しません。
+        税務判断はシニア税理士S 鈴木 弘の承認事項です。
+  - type: input
+    id: notion_task_url
+    attributes:
+      label: NotionタスクURL
+      placeholder: https://www.notion.so/...
+    validations:
+      required: true
+  - type: textarea
+    id: target_logic
+    attributes:
+      label: 確認対象ロジック
+      description: 対象となる画面、API、計算、帳票、分類ルールを記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: business_context
+    attributes:
+      label: 業務背景
+      description: どの業務判断を支援するためのロジックかを記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: assumptions
+    attributes:
+      label: 前提条件
+      description: 事実、仮定、未確認事項を分けて記載してください。
+      placeholder: |
+        事実:
+        - ...
+
+        仮定:
+        - ...
+
+        未確認:
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: risk_points
+    attributes:
+      label: 注意点・リスク
+      description: 誤判定、断定表現、税務判断に見える表現、法令確認が必要な点を記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 完了条件
+      description: どの確認が終われば実装・公開可能かを記載してください。
+    validations:
+      required: true
+  - type: checkboxes
+    id: approval_checks
+    attributes:
+      label: 承認・コンプライアンス確認
+      options:
+        - label: 税務判断を断定しない
+          required: true
+        - label: 不正・脱税・粉飾を助長しない
+          required: true
+        - label: 人間確認前提の表示にする
+          required: true
+        - label: シニア税理士S 鈴木 弘の確認が必要な事項を明記する
+          required: true
+        - label: 対象ロジックが companyId スコープで動作することを確認した
+          required: true
+        - label: secret/token/API key を含めていない
+          required: true
+  - type: textarea
+    id: reviewer_notes
+    attributes:
+      label: レビュー担当者メモ
+      description: ChatGPT / Claude Code / Codex / 人間確認者の補足欄
