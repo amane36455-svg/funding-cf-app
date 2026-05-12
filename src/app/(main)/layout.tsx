@@ -17,6 +17,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             <nav className="flex gap-4 text-sm">
               <Link href="/dashboard">ダッシュボード</Link>
               <Link href="/journals">仕訳確認</Link>
+              <Link href="/imports/mf-journal-csv">CSV取込</Link>
               <Link href="/settings">設定</Link>
               <Link href="/documents/new">資料作成</Link>
             </nav>
