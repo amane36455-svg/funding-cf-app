@@ -4,6 +4,9 @@ ALTER TYPE "CompanyRole" ADD VALUE IF NOT EXISTS 'STAFF';
 ALTER TYPE "CompanyRole" ADD VALUE IF NOT EXISTS 'REVIEWER';
 ALTER TYPE "CompanyRole" ADD VALUE IF NOT EXISTS 'VIEWER';
 
+-- New memberships should use STAFF unless a stronger role is explicitly assigned.
+ALTER TABLE "user_companies" ALTER COLUMN "role" SET DEFAULT 'STAFF';
+
 -- Company metadata for customer management and filtering.
 ALTER TABLE "companies"
   ADD COLUMN "company_type" TEXT,
