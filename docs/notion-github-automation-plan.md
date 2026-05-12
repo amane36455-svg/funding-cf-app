@@ -1,5 +1,8 @@
 # Notion GitHub Automation Plan
 
+- 現状は Notion → GitHub Issue 作成は手動運用
+- 将来的に Design A / B による自動化を検討中
+
 このドキュメントは、将来Notion「AI開発管理」の承認 YES をトリガーにGitHub Issueを自動作成するための設計メモです。現時点では手動運用を前提とし、自動化は追加実装として扱います。
 
 ## 目的
