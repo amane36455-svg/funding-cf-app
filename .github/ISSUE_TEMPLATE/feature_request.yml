@@ -1,0 +1,83 @@
+name: Feature request
+description: 新機能や改善要望を登録する
+title: "[Feature]: "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Funding CF App の新機能・改善要望テンプレートです。
+        Notion「AI開発管理」で承認 YES になった内容をGitHub Issue化してください。
+  - type: input
+    id: notion_task_url
+    attributes:
+      label: NotionタスクURL
+      description: AI開発管理DBの対象タスクURL
+      placeholder: https://www.notion.so/...
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 目的
+      description: 何を達成したいかを簡潔に記載してください。
+      placeholder: 例：月次CFの確認作業を短縮する
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景
+      description: なぜ必要か、現状の課題を記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 必要機能
+      description: 実装したい機能を箇条書きで記載してください。
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 完了条件
+      description: 何ができれば完了かを検証可能な形で記載してください。
+      placeholder: |
+        - 画面で確認できる
+        - エラー時の表示がある
+        - companyId単位でデータが分離される
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 事前確認
+      options:
+        - label: Notion上でユーザー承認が YES になっている
+          required: true
+        - label: MVPに不要な機能を追加していない
+          required: true
+        - label: multi-company / companyId の影響を確認する
+          required: true
+        - label: secret/token/API key をIssue本文に含めていない
+          required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: メモ
+      description: 補足、制約、未確認事項があれば記載してください。
