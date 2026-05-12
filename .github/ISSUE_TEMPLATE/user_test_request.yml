@@ -8,7 +8,7 @@ body:
     attributes:
       value: |
         ユーザー実機テスト依頼テンプレートです。
-        Notion「AI開発管理」のテスト依頼とアイさん確認結果に紐づけて使います。
+        Notion「AI開発管理」のテスト依頼とユーザー確認結果に紐づけて使います。
   - type: input
     id: notion_task_url
     attributes:
@@ -70,5 +70,5 @@ body:
   - type: textarea
     id: user_result
     attributes:
-      label: アイさん確認結果
+      label: ユーザー確認結果
       description: YES / NO / 保留 / 差戻し と理由を記載してください。
