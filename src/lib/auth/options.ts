@@ -5,7 +5,6 @@ import { prisma } from '@/lib/db/prisma';
 import { env } from '@/lib/env';
 import {
   resolveCurrentCompanyId,
-  userCompanyAccessWhere,
   type AppRole,
   type CompanyMembershipScope,
 } from '@/lib/auth/company-scope';
@@ -92,19 +91,6 @@ async function resolveMembershipForToken(userId: string, requestedCompanyId?: st
 
   const membership = memberships.find((item) => item.companyId === currentCompanyId);
   if (!membership) return null;
-
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.userPreference.upsert({
-      where: { userId },
-      create: { userId, currentCompanyId },
-      update: { currentCompanyId },
-    }),
-    prisma.userCompany.update({
-      where: userCompanyAccessWhere(userId, currentCompanyId),
-      data: { lastAccessedAt: now },
-    }),
-  ]);
 
   return {
     companyId: membership.companyId,
