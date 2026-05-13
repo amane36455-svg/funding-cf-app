@@ -18,7 +18,7 @@ The local Node.js toolchain and PostgreSQL-backed app flow were verified through
 ```bash
 pnpm install
 pnpm db:generate
-pnpm db:deploy
+pnpm deploy:migrate
 pnpm db:seed
 pnpm db:seed:demo
 pnpm check:env
@@ -36,7 +36,7 @@ pnpm smoke:local
 | --- | --- |
 | `pnpm install` | Passed |
 | `pnpm db:generate` | Passed |
-| `pnpm db:deploy` | Passed: no pending migrations |
+| `pnpm deploy:migrate` | Passed: no pending migrations |
 | `pnpm db:seed` | Passed |
 | `pnpm db:seed:demo` | Passed |
 | `pnpm check:env` | Passed |
@@ -61,13 +61,13 @@ Local PostgreSQL is reachable through `.env.local`:
 The existing migration is applied. For non-interactive verification, use:
 
 ```bash
-pnpm db:deploy
+pnpm deploy:migrate
 pnpm db:seed
 pnpm db:seed:demo
 pnpm check:db
 ```
 
-`pnpm db:migrate --name init` still maps to Prisma `migrate dev`, which is intended for interactive local schema development. Use `pnpm db:deploy` for CI/headless checks.
+`pnpm db:migrate --name init` still maps to Prisma `migrate dev`, which is intended for interactive local schema development. Use `pnpm deploy:migrate` for CI/headless checks after human approval.
 
 ## Remaining
 
@@ -75,7 +75,7 @@ Environment-bound checks remain:
 
 - Set production `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL`.
 - Replace local dummy secrets for NextAuth, MF OAuth, and Cron before deployment.
-- Replace local PostgreSQL URLs with Supabase `DATABASE_URL` and `DIRECT_URL`.
+- Replace local PostgreSQL URLs with Supabase `APP_DATABASE_URL` and `APP_DIRECT_URL`.
 - Set `MF_REDIRECT_URI` to the production HTTPS callback URL.
 - Confirm MF Cloud Accounting OAuth scopes and real data access with real credentials.
 - Confirm PDF export on the deployed Vercel runtime.
