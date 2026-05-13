@@ -16,6 +16,17 @@ It defines the responsibilities of the future normalize layer tables:
 
 No migration is added in this PR.
 
+## Suggested ToC for Normalize Layer Docs
+
+- Normalize Layer責務の整理
+- file storage policy
+- import lifecycle and cancellation
+- mapping rules and priority
+- validation responsibilities
+- companyId isolation
+- PR2 design tasks and dependencies
+- MVP out-of-scope items, including AI suggestion
+
 ## Non-Negotiable Rules
 
 - Every tenant-owned row must be scoped by `companyId`.
@@ -45,7 +56,7 @@ The first MVP should favor traceability and reviewability over full automation.
 
 | Table | Responsibility | Key Points |
 | --- | --- | --- |
-| `imported_files` | Stores metadata for uploaded or pasted source files. | Keep original file metadata, source system, encoding, checksum, `storage_ref`, uploader, and `companyId`. Do not store raw file bodies in DB by default. Do not mutate raw source data. |
+| `imported_files` | Stores metadata for uploaded or pasted source files. | Keep original file metadata, source system, encoding, checksum, `storageRef`, uploader, and `companyId`. Do not store raw file bodies in DB by default. Do not mutate raw source data. |
 | `import_batches` | Represents one import/preview/execute attempt. | Links to `imported_files`, tracks source template, status, row counts, warnings, errors, preview confirmation, cancellation, and execution result. |
 | `journal_entries` | Normalized journal header candidates. | One voucher or journal unit. Holds date, description, source row reference, total debit/credit, validation status, and `companyId`. Not an automatically confirmed journal. |
 | `journal_entry_lines` | Normalized journal debit/credit line candidates. | Holds side, amount, account, sub-account, department, tax category, description, mapping confidence, and review flags. |
@@ -194,6 +205,57 @@ Minimum test expectations for PR2 implementation:
 - mapping rules from company A are not applied to company B
 - row-level validation cannot leak names, amounts, or source snippets across companies
 
+## PR2 Design Task Dependencies
+
+Do these design tasks before PR2 implementation, in this order:
+
+1. Upload storage policy
+   - Decide object storage provider or local-only fallback.
+   - Decide file size limit, retention, virus/malware handling if applicable, and allowed extensions.
+   - Output: storage policy and `storageRef` format.
+
+2. File size, MIME, and character encoding policy
+   - Depends on upload storage policy.
+   - Decide max upload size, CSV/Excel MIME handling, UTF-8 and Shift_JIS detection, and mojibake warning policy.
+   - Output: parser input contract.
+
+3. Parser selection
+   - Depends on size and encoding policy.
+   - Choose CSV parser and Excel parser libraries.
+   - Confirm streaming or bounded-memory behavior for large files.
+   - Output: parser decision and fixture plan.
+
+4. Preview API shape
+   - Depends on parser output contract.
+   - Define request/response JSON, max preview rows, error format, warning format, and no client-supplied `companyId` rule.
+   - Output: `/api/imports/preview` contract.
+
+5. Manual mapping UI model
+   - Depends on preview API shape.
+   - Define system fields, source column indexes, required fields, and mapping state format.
+   - Output: mapping JSON shape.
+
+6. `mapping_rules` design
+   - Depends on manual mapping model.
+   - Define priority, collision behavior, source-system/template scope, and company-only reuse.
+   - Output: non-destructive schema proposal for a later migration PR.
+
+7. Leakage test policy
+   - Depends on preview API and mapping rule design.
+   - Define tests proving company A cannot read, preview, map, export, or infer company B data.
+   - Output: unit/integration test plan.
+
+8. MF export scope decision
+   - Depends on normalized fields and validation rules.
+   - Decide whether PR2 exports only preview JSON, MF import CSV, or both.
+   - Keep direct MF posting out of scope.
+   - Output: export scope issue.
+
+9. AI suggestion exclusion confirmation
+   - Applies to all previous tasks.
+   - Confirm PR2 MVP excludes AI suggestion/inference/auto mapping/auto approval.
+   - Output: explicit PR checklist item.
+
 ## Out of Scope for PR2 Preparation
 
 The following are not implemented in this preparation document:
@@ -214,8 +276,8 @@ The following are not implemented in this preparation document:
 
 ## Next PR Candidates
 
-1. Add non-destructive import normalize schema migration after enum migration safety is resolved.
-2. Add parser unit tests with small UTF-8 and Shift_JIS fixture files.
-3. Add import preview API and UI behind company membership checks.
-4. Add mapping rule CRUD for company-specific account/sub-account/department mapping.
-5. Add MF import CSV export after human confirmation.
+1. Decide upload storage, size limit, encoding policy, and parser libraries.
+2. Define preview API request/response shape and error format.
+3. Define manual mapping UI state and required system fields.
+4. Add leakage test plan for import preview and mapping rules.
+5. Decide MF export scope after preview and validation design are stable.
