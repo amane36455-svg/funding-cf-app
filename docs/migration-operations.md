@@ -14,6 +14,16 @@ It covers:
 
 This document does not add or apply any database migration.
 
+## Suggested ToC for Migration Docs
+
+- Previewでmigrationしない運用
+- stagingでの検証フロー
+- Production migration実行フロー
+- backup / rollback方針
+- rollback困難な変更の注意点
+- enum追加ルール
+- Normalize Layer責務の整理
+
 ## Core Rules
 
 - Build and migration must be separate steps.
@@ -23,6 +33,35 @@ This document does not add or apply any database migration.
 - Destructive migrations are prohibited unless a dedicated approval issue, backup plan, and rollback plan exist.
 - Secrets, tokens, and database URLs must never be printed in logs, issues, PRs, screenshots, or docs.
 - All tenant-owned tables must keep complete `companyId` separation.
+
+## Vercel Env Presence Checklist
+
+Check only whether each environment variable is configured. Do not print or paste values.
+
+| Environment | APP_DATABASE_URL | APP_DIRECT_URL | NEXTAUTH_SECRET | NEXTAUTH_URL | NEXT_PUBLIC_APP_URL | TOKEN_ENCRYPTION_KEY |
+| --- | --- | --- | --- | --- | --- | --- |
+| Production | Confirm configured | Confirm configured | Confirm configured | Confirm configured | Confirm configured | Confirm configured |
+| Preview | Confirm configured | Confirm configured | Confirm configured | Confirm configured | Confirm configured | Confirm configured |
+| Development | Confirm configured when used | Confirm configured when used | Confirm configured | Confirm configured when used | Confirm configured when used | Confirm configured |
+
+Rules:
+
+- Values must live only in the approved secret store.
+- Values must not be copied into GitHub issues, PR comments, docs, logs, screenshots, or chat.
+- Preview should use a Preview/staging database, not Production, when write-capable database checks are required.
+
+## Preview Redeploy Verification
+
+After the user configures the required Vercel env names:
+
+1. Trigger a Preview redeploy from Vercel or by pushing a no-op/docs commit.
+2. Open the Preview deployment logs.
+3. Confirm the previous missing env error for `APP_DIRECT_URL` no longer appears.
+4. Confirm `pnpm build` starts and completes without invoking migration commands.
+5. Confirm no secret, token, or database URL value is printed in logs.
+6. Record only pass/fail and the deployment URL, not env values.
+
+If the same env error remains, re-check whether the variable is set for the Preview environment specifically, not only Production.
 
 ## Build vs Migration
 
@@ -40,6 +79,14 @@ Reason:
 - Migration timing must be reviewable by a human.
 - Failed schema changes should not be mixed with static build failures.
 - Accounting and finance data require conservative release control.
+
+Build-time confirmation points:
+
+- `package.json` build script does not include `migrate deploy`.
+- `package.json` build script does not call `pnpm deploy:migrate`.
+- Vercel build command is `pnpm build` or equivalent build-only command.
+- CI/Preview logs do not show Prisma migration execution during build.
+- `deploy:migrate` remains a separate human-approved release step.
 
 ## Preview Flow
 
@@ -94,6 +141,47 @@ For the PR #10 multicompany migration line, staging must confirm:
 - legacy `MEMBER` values remain valid
 - login, dashboard, company switch, and customers smoke checks pass
 
+## Staging SQL Verification Points
+
+Use a trusted database console or approved read-only verification script. Do not print connection strings or secrets.
+
+Confirm migration order:
+
+- `000002_company_role_add_values`
+- `000003_user_companies_default_staff`
+- `000004_customer_multicompany_foundation`
+
+Confirm enum values:
+
+- `ADMIN` exists
+- `STAFF` exists
+- `REVIEWER` exists
+- `VIEWER` exists
+- legacy `MEMBER` still exists
+
+Confirm table/schema state:
+
+- `user_companies.role` default is `STAFF`
+- existing `user_companies` rows are still present
+- existing `MEMBER` rows, if any, are still readable
+- `user_preferences` exists
+- `user_preferences.user_id` references `users.id`
+- `user_preferences.current_company_id` references `companies.id`
+- company metadata columns exist without destructive data rewrites
+
+## Staging Smoke Test Points
+
+After staging migration, verify:
+
+- login succeeds
+- dashboard loads for the selected company
+- company switch works only for accessible companies
+- customers page loads
+- customer search/filter/favorite UI works
+- recent customers reflect explicit company switch/open actions
+- other-company data is not visible
+- API scope audit remains green in CI
+
 ## Production Migration Flow
 
 Production migration requires an explicit approval comment or release note.
@@ -110,7 +198,7 @@ Recommended flow:
 8. Run production smoke checks.
 9. Record completion and any follow-up issue.
 
-Production migration should be treated as a release operation, not a build side effect.
+Production migration should be treated as a release operation, not a build side effect. This section describes the required procedure for a future approved release; it is not approval to run Production migration now.
 
 ## PostgreSQL Enum Migration Notes
 
