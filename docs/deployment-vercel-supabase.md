@@ -7,13 +7,14 @@ For the complete production readiness checklist, environment variable ownership 
 1. Create a Supabase project.
 2. Create a Prisma-specific DB user if possible.
 3. Set connection strings:
-   - `DATABASE_URL`: Supavisor transaction pooler for serverless runtime.
-   - `DIRECT_URL`: direct/session connection for Prisma migrations.
-4. Run migrations from a trusted local machine or CI:
+   - `APP_DATABASE_URL`: Supavisor transaction pooler for serverless runtime.
+   - `APP_DIRECT_URL`: direct/session connection for Prisma migrations.
+4. Store the values only in approved secret stores. Do not commit or print the values.
+5. Run migrations from a trusted local machine or approved CI job only after human review.
 
 ```bash
 pnpm db:generate
-pnpm db:deploy
+pnpm deploy:migrate
 pnpm db:seed
 pnpm check:env:prod
 pnpm check:db
@@ -28,14 +29,24 @@ pnpm build
 2. Set framework preset to Next.js.
 3. Add environment variables from `.env.example`.
    - For Supabase/Vercel, use `.env.supabase.example` as the safer starting point.
+   - Preview and Production must both define `APP_DATABASE_URL` and `APP_DIRECT_URL` when Prisma Client generation or build-time validation requires them.
 4. Set `TOKEN_ENCRYPTION_KEY` to standard base64 that decodes to exactly 32 random bytes.
    - Generate it locally with `pnpm gen:key`.
    - Paste only the value after `TOKEN_ENCRYPTION_KEY=` into Vercel.
    - Do not use hex, a raw 32-character string, or a committed `.env` value.
 5. Set `CRON_SECRET` to a random value of at least 16 characters.
-6. Deploy.
+6. Keep the Vercel build command as `pnpm build`.
+7. Deploy.
 
-## 3. Cron
+## 3. Build / Migration Policy
+
+`pnpm build` runs Prisma Client generation and Next.js build only. It does not run DB migrations.
+
+Preview builds must not apply migrations. This keeps schema changes reviewable and prevents accidental DB writes from feature branches.
+
+Run `pnpm deploy:migrate` only for Production deploys or manually approved staging checks. For accounting and tax-adjacent data, verify the migration SQL in staging before applying it to Production.
+
+## 4. Cron
 
 `vercel.json` schedules `/api/sync/daily` at `0 18 * * *`.
 
@@ -49,7 +60,7 @@ Authorization: Bearer <CRON_SECRET>
 
 The route also accepts `POST` for local verification.
 
-## 4. PDF
+## 5. PDF
 
 Local:
 
@@ -62,7 +73,7 @@ Vercel:
 - The app falls back to `@sparticuz/chromium-min` if `PUPPETEER_EXECUTABLE_PATH` is not set.
 - If Vercel cannot bundle/download Chromium, set `CHROMIUM_DOWNLOAD_URL` to a compatible tarball URL.
 
-## 5. Smoke Test After Deploy
+## 6. Smoke Test After Deploy
 
 Run the automated smoke check first:
 

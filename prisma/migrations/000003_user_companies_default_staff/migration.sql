@@ -1,0 +1,1 @@
+ALTER TABLE "user_companies" ALTER COLUMN "role" SET DEFAULT 'STAFF';

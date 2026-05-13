@@ -39,8 +39,8 @@ $dbUrl = "postgresql://postgres:$escaped@localhost:$port/funding_cf?schema=publi
 
 if (Test-Path $envFile) {
   $content = Get-Content -LiteralPath $envFile -Raw
-  $content = $content -replace 'DATABASE_URL=.*', "DATABASE_URL=$dbUrl"
-  $content = $content -replace 'DIRECT_URL=.*', "DIRECT_URL=$dbUrl"
+  $content = $content -replace 'APP_DATABASE_URL=.*', "APP_DATABASE_URL=$dbUrl"
+  $content = $content -replace 'APP_DIRECT_URL=.*', "APP_DIRECT_URL=$dbUrl"
   Set-Content -LiteralPath $envFile -Value $content -Encoding UTF8
 }
 

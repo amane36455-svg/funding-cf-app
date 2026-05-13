@@ -2,8 +2,8 @@
 
 ## Environment
 
-- `DATABASE_URL` is Supabase transaction pooler URL.
-- `DIRECT_URL` is direct/session URL for migrations.
+- `APP_DATABASE_URL` is Supabase transaction pooler URL.
+- `APP_DIRECT_URL` is direct/session URL for migrations.
 - `NEXTAUTH_SECRET` is set.
 - `TOKEN_ENCRYPTION_KEY` is standard base64 that decodes to exactly 32 random bytes, generated with `pnpm gen:key`, and backed up securely.
 - `MF_CLIENT_ID` and `MF_CLIENT_SECRET` are set.
@@ -13,14 +13,17 @@
 
 ## Database
 
+- Migration SQL has been reviewed by a human before Production apply.
+- Staging migration has been checked before Production apply.
+- Preview builds do not run DB migrations.
 - `pnpm db:generate` passes.
-- `pnpm db:deploy` passes.
-- `pnpm db:seed` passes.
+- `pnpm deploy:migrate` passes only in the approved migration step.
+- `pnpm db:seed` passes when seed data is intended for the target environment.
 - `pnpm check:env:prod` passes.
 - `pnpm check:db` passes.
 - `pnpm audit:api-scope` passes.
 - `pnpm test` passes.
-- `pnpm build` passes.
+- `pnpm build` passes without running migration.
 
 ## Application
 

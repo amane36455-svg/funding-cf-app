@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import type { AppRole } from '@/lib/auth/company-scope';
 
 type CompanyItem = {
   id: string;
   name: string;
-  role: 'OWNER' | 'MEMBER';
+  role: AppRole;
+  isFavorite: boolean;
+  lastAccessedAt: string | null;
 };
 
 export function CompanySwitcher({ currentCompanyId }: { currentCompanyId: string }) {
@@ -47,12 +50,14 @@ export function CompanySwitcher({ currentCompanyId }: { currentCompanyId: string
       onChange={(event) => switchCompany(event.target.value)}
       disabled={loading || companies.length <= 1}
       className="rounded border px-2 py-1 text-sm"
+      aria-label="会社を切り替え"
     >
       {companies.length === 0 ? (
         <option value={currentCompanyId}>会社</option>
       ) : (
         companies.map((company) => (
           <option key={company.id} value={company.id}>
+            {company.isFavorite ? '★ ' : ''}
             {company.name}
           </option>
         ))

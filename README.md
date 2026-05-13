@@ -24,7 +24,7 @@ pnpm install
 pnpm gen:key >> .env.local
 pnpm db:local:setup
 pnpm db:generate
-pnpm db:deploy
+pnpm deploy:migrate
 pnpm db:seed
 pnpm db:seed:demo
 pnpm check:env
@@ -34,11 +34,17 @@ pnpm dev
 pnpm smoke:local
 ```
 
-`db:local:setup` / `db:local:start` は既定で `localhost:55432` を使い、`.env.local` の `DATABASE_URL` / `DIRECT_URL` を更新します。別ポートを使う場合は `LOCAL_POSTGRES_PORT` を指定してください。
+`db:local:setup` / `db:local:start` は既定で `localhost:55432` を使い、`.env.local` の `APP_DATABASE_URL` / `APP_DIRECT_URL` を更新します。別ポートを使う場合は `LOCAL_POSTGRES_PORT` を指定してください。
 
-Docker を使う場合は `pnpm db:local:setup` の代わりに `docker compose up -d db` を実行し、`.env.local` の `DATABASE_URL` / `DIRECT_URL` を `localhost:5432` 向けにしてください。
+Docker を使う場合は `pnpm db:local:setup` の代わりに `docker compose up -d db` を実行し、`.env.local` の `APP_DATABASE_URL` / `APP_DIRECT_URL` を `localhost:5432` 向けにしてください。
 
-Supabase/Vercel 向けの本番値を確認する場合は、`pnpm check:env:prod` を使います。
+Supabase/Vercel 向けの本番値を確認する場合は、`pnpm check:env:prod` を使います。secret や接続文字列の値はログに出さないでください。
+
+## Build / Migration 運用
+
+`pnpm build` は Prisma Client 生成と Next.js build のみを実行します。Preview build では migration を自動実行しません。
+
+DB migration は、Production deploy 時または手動承認後に `pnpm deploy:migrate` で実行します。会計・税務系データを扱うため、Preview環境では自動migrationを避け、stagingで内容確認してからProductionへ適用してください。
 
 ## 検証コマンド
 
@@ -55,8 +61,8 @@ pnpm smoke:local
 
 ## 必須環境変数
 
-- `DATABASE_URL`
-- `DIRECT_URL`
+- `APP_DATABASE_URL`
+- `APP_DIRECT_URL`
 - `NEXTAUTH_SECRET`
 - `TOKEN_ENCRYPTION_KEY`
 - `MF_CLIENT_ID`

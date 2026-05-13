@@ -17,47 +17,77 @@ model User {
   updatedAt    DateTime      @updatedAt @map("updated_at")
   memberships  UserCompany[]
   companies    Company[]     @relation("CompanyOwner")
+  preference   UserPreference?
   documents    GeneratedDocument[]
 
   @@map("users")
 }
 
 model Company {
-  id               String              @id @default(uuid()) @db.Uuid
-  name             String
-  ownerUserId      String              @map("owner_user_id") @db.Uuid
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
-  owner            User                @relation("CompanyOwner", fields: [ownerUserId], references: [id])
-  memberships      UserCompany[]
-  mfConnection     MfConnection?
-  mfAccounts       MfAccount[]
-  mfJournals       MfJournal[]
-  mfJournalDetails MfJournalDetail[]
-  cfRules          CfClassificationRule[]
-  cfResults        CfClassificationResult[]
-  documents        GeneratedDocument[]
-  syncHistories    MfSyncHistory[]
+  id                 String              @id @default(uuid()) @db.Uuid
+  name               String
+  ownerUserId        String              @map("owner_user_id") @db.Uuid
+  companyType        String?             @map("company_type")
+  status             String              @default("active")
+  fiscalMonth        Int?                @map("fiscal_month")
+  industry           String?
+  memo               String?             @db.Text
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  owner              User                @relation("CompanyOwner", fields: [ownerUserId], references: [id])
+  memberships        UserCompany[]
+  currentPreferences UserPreference[]    @relation("CurrentCompanyPreference")
+  mfConnection       MfConnection?
+  mfAccounts         MfAccount[]
+  mfJournals         MfJournal[]
+  mfJournalDetails   MfJournalDetail[]
+  cfRules            CfClassificationRule[]
+  cfResults          CfClassificationResult[]
+  documents          GeneratedDocument[]
+  syncHistories      MfSyncHistory[]
 
+  @@index([status])
+  @@index([industry])
   @@map("companies")
 }
 
 enum CompanyRole {
   OWNER
+  ADMIN
+  STAFF
+  REVIEWER
+  VIEWER
   MEMBER
 }
 
 model UserCompany {
-  userId    String      @map("user_id") @db.Uuid
-  companyId String      @map("company_id") @db.Uuid
-  role      CompanyRole @default(MEMBER)
-  createdAt DateTime    @default(now()) @map("created_at")
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company   Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId         String      @map("user_id") @db.Uuid
+  companyId      String      @map("company_id") @db.Uuid
+  role           CompanyRole @default(STAFF)
+  isFavorite     Boolean     @default(false) @map("is_favorite")
+  lastAccessedAt DateTime?   @map("last_accessed_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@id([userId, companyId])
   @@index([companyId])
+  @@index([userId, isFavorite])
+  @@index([userId, lastAccessedAt])
   @@map("user_companies")
+}
+
+model UserPreference {
+  userId           String   @id @map("user_id") @db.Uuid
+  currentCompanyId String?  @map("current_company_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentCompany   Company? @relation("CurrentCompanyPreference", fields: [currentCompanyId], references: [id], onDelete: SetNull)
+
+  @@index([currentCompanyId])
+  @@map("user_preferences")
 }
 
 model MfConnection {
@@ -218,4 +248,3 @@ model MfSyncHistory {
   @@index([companyId, startedAt])
   @@map("mf_sync_history")
 }
-
