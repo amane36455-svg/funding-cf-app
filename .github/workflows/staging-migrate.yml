@@ -60,11 +60,22 @@ jobs:
       - name: Check migration status before deploy
         shell: bash
         continue-on-error: true
-        run: node scripts/run-prisma.mjs migrate status >/dev/null 2>&1
+        run: |
+          set +e
+          node scripts/run-prisma.mjs migrate status > migrate-status-before.txt 2>&1
+          grep -E '^[[:space:]]*[0-9]{6}_[A-Za-z0-9_-]+' migrate-status-before.txt || true
+          rm -f migrate-status-before.txt
+          exit 0
 
       - name: Deploy migrations to staging
         run: pnpm deploy:migrate
 
       - name: Check migration status after deploy
         shell: bash
-        run: node scripts/run-prisma.mjs migrate status >/dev/null 2>&1
+        run: |
+          set +e
+          node scripts/run-prisma.mjs migrate status > migrate-status-after.txt 2>&1
+          status=$?
+          grep -E '^[[:space:]]*[0-9]{6}_[A-Za-z0-9_-]+' migrate-status-after.txt || true
+          rm -f migrate-status-after.txt
+          exit $status
