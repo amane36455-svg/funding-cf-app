@@ -4,7 +4,7 @@
 
 This document organizes future business packages after the import and monthly operations foundation is stable.
 
-It is a planning document only. It does not add a database migration, Prisma schema change, API, UI implementation, tax filing implementation, labor filing implementation, electronic filing, or AI automatic finalization.
+It is a planning document only. It does not add a database migration, Prisma schema change, API, UI implementation, tax filing implementation, labor filing implementation, electronic filing, or journal finalization.
 
 ## Relationship With Current Priorities
 
@@ -43,15 +43,15 @@ Issue candidates:
    - payment due candidates
 
 5. 差額理由選択
-   - bank fee
-   - foreign exchange difference
-   - offset
-   - discount
-   - membership fee deduction
+   - bank fee candidate
+   - foreign exchange difference candidate
+   - offset candidate
+   - discount candidate
+   - membership fee deduction candidate
    - unknown / needs review
 
 6. 修正仕訳候補
-   - candidate only
+   - journal draft suggestion only
    - evidence link required
    - human confirmation before export
 
@@ -66,11 +66,11 @@ Issue candidates:
 1. 部門別損益
 2. 費用別集計
 3. 売上回収状況
-4. 資金繰り資料
-5. 銀行提出資料
+4. 財務指標シミュレーション
+5. 銀行提出資料の下書き
 6. デザインテンプレート
 
-Outputs are drafts until reviewed by a human. Bank submission materials must not imply financial advice or financing approval.
+Outputs are drafts until reviewed by a human. Bank submission materials must not imply financial advice, financing approval, or credit scoring.
 
 ## Epic: 業種別パック
 
@@ -85,9 +85,13 @@ Issue candidates:
 - fixed assets
 - medical expenses where relevant
 - blue return draft support
-- Tatsujin import draft support
+- Tatsujin input/import pre-check data support
 
 ### 建築業・一人親方パック
+
+Purpose:
+
+- 現場ごとの売上・材料費・外注費・車両費を整理し、現場別の採算を見える化する。
 
 Issue candidates:
 
@@ -97,9 +101,9 @@ Issue candidates:
 - outsourcing costs
 - vehicle expenses
 - tools
-- site-level profit/loss
+- site-level profitability view
 - question sheets
-- Tatsujin import draft support
+- Tatsujin input/import pre-check data support when official specs or user-provided samples are confirmed
 
 ### 美容室パック
 
@@ -113,7 +117,7 @@ Issue candidates:
 - average customer spend
 - material cost ratio
 - store-level profit/loss
-- monthly reports
+- monthly report drafts
 
 ## Epic: 専門家相談パック
 
@@ -154,11 +158,12 @@ Candidates only. Do not add migrations until schema review.
 | `auxiliary_reconciliation_jobs` | Sub-ledger reconciliation runs |
 | `auxiliary_reconciliation_items` | Individual matched/unmatched items |
 | `monthly_review_items` | Monthly review findings and status |
-| `management_report_runs` | Monthly report generation runs |
-| `document_templates` | Report, email, consultation, and bank material templates |
+| `monthly_review_priority_alerts` | Review priority indicators and confirmation alerts |
+| `management_report_runs` | Monthly report draft generation runs |
+| `document_templates` | Report, email, consultation, and bank material draft templates |
 | `industry_pack_settings` | Company-specific settings for industry packs |
 | `fixed_assets` | Asset candidates and master data |
-| `fixed_asset_events` | Acquisition, disposal, sale, depreciation events |
+| `fixed_asset_events` | Acquisition, disposal, sale, depreciation candidate events |
 | `tax_return_assist_cases` | Draft support cases for tax return workflows |
 | `payroll_assist_cases` | Draft support cases for payroll/labor forms |
 | `consultation_cases` | Expert consultation organization cases |
@@ -178,7 +183,7 @@ Candidates only. Do not add migrations until schema review.
 - Tax return support is draft/transfer support only.
 - Labor form support is draft/form filling support only.
 - Electronic filing is out of scope.
-- Tatsujin specs must be confirmed from official docs or user-provided samples.
+- Tatsujin, JDL, and Miroku specs must be confirmed from official docs or user-provided samples before export assistance is implemented.
 - The app must not make definitive tax, labor, legal, or financial judgments.
 - Expert consultation package must not assume referral fees or brokerage fees.
 
@@ -196,7 +201,7 @@ Candidates only. Do not add migrations until schema review.
 - definitive tax judgment
 - definitive labor judgment
 - legal or financial judgment
-- AI automatic finalization
+- journal finalization without human review
 
 ## Claude Review Request
 
@@ -205,5 +210,6 @@ Please review whether:
 - business packages remain future roadmap items
 - professional judgment boundaries are clear
 - expert consultation package avoids referral-fee assumptions
-- industry packs do not imply tax/labor finalization
+- industry packs do not imply tax/labor/accounting treatment finalization
+- Tatsujin/JDL/Miroku support is phrased as export assistance after specs or samples are confirmed
 - companyId isolation rules are sufficient
