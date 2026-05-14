@@ -4,7 +4,7 @@
 
 This document organizes future requirements for question sheets, document collection, missing document management, and the link from questions to journal candidates.
 
-It is a planning document only. It does not add a database migration, Prisma schema change, API, UI implementation, notification implementation, or AI journal finalization.
+It is a planning document only. It does not add a database migration, Prisma schema change, API, UI implementation, notification implementation, or journal finalization.
 
 ## Purpose
 
@@ -46,13 +46,13 @@ Issue candidates:
    - arrival status
    - missing / partial / needs review / not applicable / completed
 
-2. 質問表自動生成
+2. 質問表ドラフト生成
    - draft questions from unresolved rows
    - draft questions from missing documents
    - draft questions from monthly journal checks
    - draft questions from reconciliation differences
 
-3. 未回答リマインド
+3. 未回答リマインド下書き
    - unanswered question tracking
    - reminder draft generation
    - human confirmation before sending
@@ -66,14 +66,14 @@ Issue candidates:
    - turn confirmed answers into company rulebook candidates
    - explicit human confirmation before rulebook registration
 
-6. 質問から仕訳へ
-   - answer-derived journal candidates
+6. 質問から仕訳候補へ
+   - answer-derived journal draft suggestions
    - evidence link to answer
    - human confirmation before MF CSV export
 
 ## Question-to-Journal Policy
 
-Question answers may create journal candidates only.
+Question answers may create journal draft suggestions only.
 
 Example:
 
@@ -83,9 +83,9 @@ Example:
 
 Rules:
 
-- candidate only
-- no automatic finalization
-- no tax judgment finalization
+- draft suggestion only
+- no final posting without human review
+- no tax category or tax treatment conclusion
 - no direct posting to MF
 - human review before export
 - evidence link to the answer must be preserved
@@ -156,16 +156,16 @@ Review status candidates:
 - notification sending implementation
 - PR2 implementation
 - AI suggestion in PR2
-- AI automatic journal finalization
-- tax judgment finalization
-- labor judgment finalization
+- journal finalization without human review
+- tax category or tax treatment conclusion
+- labor judgment conclusion
 
 ## Claude Review Request
 
 Please review whether:
 
 - question generation is clearly post-PR2
-- answer-to-journal flow is candidate-only
+- answer-to-journal flow is draft suggestion only
 - company rulebook registration requires human confirmation
 - companyId isolation rules are sufficient
 - no notification or sending behavior leaks confidential data
