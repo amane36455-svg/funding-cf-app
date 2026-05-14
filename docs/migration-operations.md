@@ -141,6 +141,24 @@ For the PR #10 multicompany migration line, staging must confirm:
 - legacy `MEMBER` values remain valid
 - login, dashboard, company switch, and customers smoke checks pass
 
+## Staging DB Allowlist Rules
+
+The staging migration workflow must verify its target before running `pnpm deploy:migrate`.
+
+`STAGING_DB_ALLOWED_HOSTS` is the allowlist used by `scripts/assert-staging-db.mjs`.
+
+Rules:
+
+- Register staging database hosts only.
+- Do not register Production database hosts.
+- Do not use `*` or any wildcard-style bypass.
+- Store the value only in the GitHub `staging` Environment secret store.
+- Do not paste the value into Issues, PRs, chat, screenshots, or logs.
+- Changes to this allowlist require human review before the next staging migration run.
+- If the staging database is recreated, update the allowlist through the same reviewed process.
+
+The `production` / `prod` marker detection in `assert-staging-db.mjs` is only a secondary defense. The allowlist is the primary safety gate. A target that does not match the allowlist must fail before any migration command runs, even if it does not contain a production-like marker.
+
 ## Staging SQL Verification Points
 
 Use a trusted database console or approved read-only verification script. Do not print connection strings or secrets.
