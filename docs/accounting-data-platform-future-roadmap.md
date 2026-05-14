@@ -4,17 +4,16 @@
 
 This document records future requirements for the Funding CF App as an accounting data integration platform.
 
-It is a planning document only. It does not implement application features, database migrations, tax judgments, labor judgments, AI automatic finalization, or production operations.
+It is a planning document only. It does not implement application features, database migrations, tax or labor conclusions, journal final posting, or production operations.
 
 ## Non-Negotiable Rules
 
 - Every tenant-owned record must be scoped by `companyId`.
 - Data from one company must never be visible to another company.
-- Company-specific rules must not be auto-applied across companies.
-- AI may assist with candidates, summaries, and checklists only after human review flows are defined.
-- AI must not automatically finalize journal entries, tax positions, labor procedures, filings, or expert judgments.
-- Tax judgments require human confirmation by the responsible tax professional.
-- Labor and payroll judgments require human confirmation by the responsible professional.
+- Company-specific rules must not be applied across companies.
+- AI may assist with draft suggestions, summaries, and checklists only after human review flows are defined.
+- Journal draft suggestions, tax category mapping candidates, labor form drafts, filing drafts, and expert consultation drafts require human review.
+- The app must not make definitive tax, labor, legal, financial, or accounting treatment conclusions.
 - Tatsujin, JDL, Miroku, and other vendor-specific formats must not be fixed by speculation. Use official specs or user-provided samples before implementation.
 - Secrets, tokens, API keys, DB URLs, and raw confidential customer data must not be logged or committed.
 
@@ -22,15 +21,15 @@ It is a planning document only. It does not implement application features, data
 
 | Menu | Main Future Capabilities |
 | --- | --- |
-| 財務会計 | MF import/export, journal review, accounting software conversion hub, receivable/payable reconciliation, monthly journal checks |
-| 管理会計 | Monthly cockpit, management accounting dashboard, risk score, monthly review generation |
-| 申告書作成 | Corporate/consumption tax draft support, individual tax/blue return support, Tatsujin export support |
-| 労務・給与 | Payroll/labor form preparation support, payroll journal candidates, social insurance and withholding support |
+| 財務会計 | MF import/export drafts, journal review, accounting software conversion hub, receivable/payable reconciliation, monthly journal checks |
+| 管理会計 | Monthly cockpit, management accounting dashboard, monthly review priority alerts, monthly review draft generation |
+| 申告書作成 | Corporate/consumption tax draft support, individual tax/blue return support, Tatsujin input/import pre-check data support |
+| 労務・給与 | Payroll/labor form preparation support, payroll journal draft suggestions, social insurance and withholding support drafts |
 | 資料整理 | Material arrival management, question sheets, missing document tracking, evidence links |
-| 資料作成 | Monthly reports, bank submission materials, customer explanation memo, internal review sheets |
-| 金融 | Funding materials, bank report reflection, cash flow and receivable risk view |
+| 資料作成 | Monthly report drafts, bank submission drafts, customer explanation memo drafts, internal review sheets |
+| 金融 | Funding material drafts, bank report reflection drafts, cash flow simulation, financial indicator simulation |
 | 業種別パック | Real estate, construction/sole proprietor, beauty salon packs |
-| 専門家相談 | Consultation package for lawyers, tax accountants, labor consultants, banks, financial institutions |
+| 専門家相談 | Consultation preparation package for lawyers, tax accountants, labor consultants, banks, financial institutions |
 | その他 | Design improvement, template management, audit readiness, admin settings |
 
 ## Feature Concepts
@@ -57,16 +56,16 @@ Purpose:
 
 ### 2. 会社別ルールブック
 
-Store company-specific accounting, question, sub-account, department, and document submission rules.
+Store company-specific accounting, question, sub-account, department, and document submission rule candidates.
 
 Examples:
 
-- この入金名義はこの売上先
-- この差額は支払手数料
-- この取引先は外注費
-- この資料は毎月15日頃に届く
+- この入金名義はこの売上先として扱う候補
+- この差額は支払手数料として扱う候補
+- この取引先は外注費として扱う候補
+- この資料は毎月15日頃に届く傾向
 - この質問は過去にこう回答
-- この家賃は毎月必ず計上
+- この家賃は毎月確認する候補
 
 Rules:
 
@@ -76,7 +75,7 @@ Rules:
 
 ### 3. 根拠リンク付き仕訳
 
-Attach evidence to journal candidates and adjustment candidates.
+Attach evidence to journal draft suggestions and adjustment candidates.
 
 Evidence targets:
 
@@ -90,11 +89,11 @@ Evidence targets:
 
 Purpose:
 
-- Make it traceable why a transaction was processed in a certain way during handover, tax audit, and monthly review.
+- Make it traceable why a transaction was suggested in a certain way during handover, audit preparation, and monthly review.
 
-### 4. 質問から仕訳へ
+### 4. 質問から仕訳候補へ
 
-Generate journal candidates from question sheet answers.
+Generate journal draft suggestions from question sheet answers.
 
 Example:
 
@@ -104,12 +103,13 @@ Example:
 
 Rules:
 
-- The generated journal is a candidate only.
+- The generated journal is a draft suggestion only.
 - Human confirmation is required before MF import CSV export.
+- No direct posting to MF.
 
-### 5. 月次レビュー自動生成
+### 5. 月次レビュー下書き生成
 
-Generate monthly review sheets from monthly check results.
+Generate monthly review drafts from monthly check results.
 
 Targets:
 
@@ -118,37 +118,37 @@ Targets:
 - 売上回収遅延
 - 補助元帳差異
 - 固定資産候補
-- 税区分要確認
+- 税区分マッピング候補の要確認
 - 質問未回答
 - 資料不足
 
 Outputs:
 
-- 月次レビュー表
-- 顧客向け説明メモ
+- 月次レビュー表の下書き
+- 顧客向け説明メモの下書き
 - 社内確認事項
-- 銀行提出資料への反映
+- 銀行提出資料への反映候補
 
-### 6. 顧客別リスクスコア
+### 6. 月次レビュー優先度 / 確認推奨アラート
 
-Visualize monthly accounting risk per company.
+Visualize which companies need review attention during monthly closing.
 
-Score examples:
+Alert examples:
 
-- 資料遅延リスク
-- 質問未回答リスク
-- 資金繰りリスク
-- 売掛回収リスク
-- 税務確認リスク
-- 月次遅延リスク
+- 資料遅延アラート
+- 質問未回答アラート
+- 資金繰り確認推奨
+- 売掛回収確認推奨
+- 税区分マッピング候補の確認推奨
+- 月次遅延アラート
 
 Purpose:
 
-- Help staff choose which companies need priority attention.
+- Help staff decide which companies need priority review without presenting a credit score or definitive risk judgment.
 
 ### 7. 会計ソフト変換ハブ
 
-Convert journals, trial balances, and chart of accounts exported from accounting software into another accounting software format.
+Support conversion of journals, trial balances, and chart of accounts exported from accounting software into reviewed export formats.
 
 Policy:
 
@@ -165,16 +165,16 @@ Inputs:
 
 Outputs:
 
-- MFインポート用CSV
-- 弥生形式CSV
-- freee形式CSV
-- JDL取込用データ
-- ミロク取込用データ
+- MFインポート用CSVの下書き
+- 弥生形式CSVの下書き
+- freee形式CSVの下書き
+- JDL向け汎用エクスポート補助（公式仕様またはユーザー提供サンプル確認後）
+- ミロク向け汎用エクスポート補助（公式仕様またはユーザー提供サンプル確認後）
 
 Rules:
 
 - Do not hard-code JDL/Miroku specs without confirmed samples/specs.
-- Tax category conversion must require review.
+- Tax category mapping candidates must require review.
 - Never overwrite source data.
 
 ### 8. 資料整理・質問表・不足資料管理
@@ -200,11 +200,11 @@ Targets:
 Functions:
 
 - 到着済 / 未着 / 一部不足 / 要確認 / 対象外 / 完了
-- 不足資料メール自動生成
-- 質問表自動生成
-- 未回答リマインド
+- 不足資料メール下書き生成
+- 質問表下書き生成
+- 未回答リマインド下書き
 - 過去質問・回答履歴検索
-- 会社別ナレッジ化
+- 会社別ナレッジ化候補
 
 ### 9. 債権債務管理・補助元帳照合
 
@@ -227,16 +227,16 @@ Functions:
 - 未払抽出
 - 相殺候補
 - 金額差異
-- 支払手数料
-- 為替差損益
-- 会費控除
+- 支払手数料候補
+- 為替差損益候補
+- 会費控除候補
 - 修正仕訳候補
 - 質問表連携
-- MFインポート用CSV出力
+- MFインポート用CSV下書き出力
 
 ### 10. 月次仕訳チェック
 
-Check whether recurring monthly journal entries are posted.
+Check whether recurring monthly journal entries appear to be posted.
 
 Targets:
 
@@ -253,9 +253,9 @@ Targets:
 
 If missing:
 
-- Reflect in monthly review sheet.
+- Reflect in monthly review draft.
 - Add to confirmation items.
-- Reflect in question sheet.
+- Reflect in question sheet draft.
 
 ### 11. 管理会計・月次資料
 
@@ -271,21 +271,21 @@ Functions:
 - 得意先別売掛残高
 - 回収率
 - 滞留債権
-- 月次資料自動生成
-- 銀行提出資料への反映
+- 月次資料下書き生成
+- 銀行提出資料の下書きへの反映
 
 ### 12. 固定資産管理
 
 Functions:
 
-- 新規資産登録
-- 除却
-- 売却
-- 減価償却
+- 新規資産登録候補
+- 除却候補
+- 売却候補
+- 減価償却候補
 - 固定資産管理表
-- 修繕費 / 資本的支出の判断補助
-- 仕訳候補生成
-- 達人インポート用資料作成
+- 修繕費 / 資本的支出の確認補助
+- 仕訳候補のサジェスト（要人間レビュー）
+- 達人入力・インポート前の確認用データ作成を支援
 
 Rules:
 
@@ -300,7 +300,7 @@ Targets:
 - 社会保険料
 - 労働保険料
 - 源泉所得税
-- 給与仕訳生成
+- 給与仕訳候補のサジェスト（要人間レビュー）
 - 算定基礎届
 - 月額変更届
 - 住所変更届
@@ -316,7 +316,7 @@ Policy:
 
 Functions:
 
-- 自動計算
+- 計算補助
 - 記入欄ガイド
 - 記入補助シート
 - 社労士確認ステータス
@@ -327,7 +327,7 @@ Functions:
 
 Purpose:
 
-- Classify Google Drive documents and support individual tax return, blue return statement, and Tatsujin import data preparation.
+- Classify Google Drive documents and support individual tax return, blue return statement, and pre-check data for Tatsujin input/import.
 
 Targets:
 
@@ -345,14 +345,14 @@ Targets:
 
 Functions:
 
-- Google Drive資料分類
+- Google Drive資料分類候補
 - 不足資料チェック
 - 医療費Excel取込
 - 物件別収入Excel取込
 - 物件別費用Excel取込
 - 青色申告決算書下書き
-- 達人インポート用Excel/CSV
-- 達人インポート前チェック
+- 達人入力・インポート前の確認用Excel/CSV作成を支援
+- 達人入力・インポート前チェック
 
 Rules:
 
@@ -370,8 +370,8 @@ Rules:
 - 借入金
 - 固定資産
 - 医療費
-- 青色申告決算書
-- 達人インポート
+- 青色申告決算書下書き
+- 達人入力・インポート前の確認用データ作成を支援
 
 #### 建築業・一人親方パック
 
@@ -381,9 +381,9 @@ Rules:
 - 外注費
 - 車両費
 - 工具
-- 現場別損益
+- 現場ごとの売上・材料費・外注費・車両費を整理し、現場別の採算を見える化する
 - 質問表
-- 達人インポート
+- 達人入力・インポート前の確認用データ作成を支援
 
 #### 美容室パック
 
@@ -395,7 +395,7 @@ Rules:
 - 客単価
 - 材料費率
 - 店舗別損益
-- 月次資料
+- 月次資料下書き
 
 ### 16. 専門家相談パック
 
@@ -415,7 +415,7 @@ Functions:
 
 - 相談内容入力
 - 専門家分類
-- 相談依頼書自動作成
+- 相談依頼書下書き生成
 - 必要資料リスト生成
 - 相談履歴管理
 - 次回アクション管理
@@ -424,7 +424,7 @@ Functions:
 
 Purpose:
 
-- Improve UI and the appearance of monthly materials and bank submission materials.
+- Improve UI and the appearance of monthly materials and bank submission material drafts.
 
 Candidate tools:
 
@@ -440,7 +440,7 @@ Targets:
 - 資料到着管理
 - 質問表
 - 月次レビュー
-- 銀行提出資料
+- 銀行提出資料の下書き
 - 管理会計ダッシュボード
 
 ## Phase Plan
@@ -458,7 +458,7 @@ Targets:
 - Encoding and parser policy
 - Manual mapping UI
 - Normalize layer design
-- MF import CSV export scope decision
+- MF import CSV draft export scope decision
 - Formula injection protection
 - Company isolation tests
 
@@ -467,16 +467,16 @@ Targets:
 - 月次決算コックピット
 - 資料整理・質問表・不足資料管理
 - 会社別ルールブック
-- 根拠リンク付き仕訳
+- 根拠リンク付き仕訳候補
 - 月次仕訳チェック
-- 顧客別リスクスコア
+- 月次レビュー優先度 / 確認推奨アラート
 
 ### Phase 3: Review, Reconciliation, and Reporting
 
-- 月次レビュー自動生成
+- 月次レビュー下書き生成
 - 債権債務管理・補助元帳照合
 - 管理会計・月次資料
-- 銀行提出資料への反映
+- 銀行提出資料の下書きへの反映
 - 固定資産管理 draft support
 
 ### Phase 4: Conversion and Domain Expansion
@@ -486,12 +486,12 @@ Targets:
 - 個人確定申告・青色申告・達人連携 draft support
 - 労務・給与・所定様式記入補助
 
-### Phase 5: Assisted Automation With Approval Gates
+### Phase 5: Assisted Draft Suggestions With Approval Gates
 
-- 質問から仕訳へ
-- Evidence-backed journal candidate generation
+- 質問から仕訳候補へ
+- Evidence-backed journal draft suggestions
 - High-confidence suggestion workflows only after review controls exist
-- No complete auto-finalization without explicit future approval and audit design
+- No final posting without explicit future approval and audit design
 
 ## Relationship With PR2
 
@@ -508,7 +508,7 @@ PR2 should focus on:
 - no DB insert if enum/staging migration remains unresolved
 - no AI suggestion
 - no automatic mapping
-- no automatic journal finalization
+- no final journal posting
 
 Future features in this roadmap depend on PR2 because they need:
 
@@ -529,7 +529,7 @@ Minimum expectations:
 - Every query uses server-side company context, not client-supplied `companyId`.
 - Cross-company copy is explicit, logged, and requires human action.
 - Shared templates must not expose company data.
-- Rulebooks, evidence links, questions, monthly close status, and risk scores are company-specific by default.
+- Rulebooks, evidence links, questions, monthly close status, and monthly review priority alerts are company-specific by default.
 - AI prompts, summaries, and generated candidates must not include data from another `companyId`.
 - Export jobs must verify membership before reading source data.
 - Logs must not include raw source rows, customer data, secret values, or DB URLs.
@@ -551,21 +551,21 @@ These are candidates only. Do not add migrations until each feature has a review
 | `question_answers` | User answers and review state |
 | `journal_candidate_evidence` | Evidence attached to journal candidates |
 | `monthly_review_findings` | Monthly review observations and issues |
-| `client_risk_scores` | Per-company risk score snapshots |
+| `monthly_review_priority_alerts` | Review priority indicators and confirmation alerts |
 | `conversion_jobs` | Accounting software conversion attempts |
 | `conversion_rows` | Normalized conversion row details |
 | `auxiliary_reconciliation_jobs` | Sub-ledger reconciliation runs |
 | `auxiliary_reconciliation_items` | Unmatched or matched sub-ledger items |
 | `recurring_journal_rules` | Monthly recurring journal expectations |
 | `recurring_journal_checks` | Monthly rule check results |
-| `management_report_runs` | Monthly report generation runs |
+| `management_report_runs` | Monthly report draft generation runs |
 | `fixed_assets` | Asset master candidates |
-| `fixed_asset_events` | Acquisition, disposal, sale, depreciation events |
+| `fixed_asset_events` | Acquisition, disposal, sale, depreciation candidate events |
 | `payroll_assist_cases` | Payroll/labor form support cases |
 | `tax_return_assist_cases` | Individual/corporate tax support cases |
 | `industry_pack_settings` | Company-specific industry pack settings |
 | `consultation_cases` | Professional consultation organization cases |
-| `document_templates` | Templates for emails, reports, bank materials, consultation sheets |
+| `document_templates` | Templates for emails, reports, bank material drafts, consultation sheets |
 
 ## Issue Split Proposal
 
@@ -581,17 +581,17 @@ Recommended GitHub Issues:
 8. Phase 2: company rulebook requirements
 9. Phase 2: evidence links for journal candidates
 10. Phase 2: monthly recurring journal check requirements
-11. Phase 2: client risk score requirements
-12. Phase 3: monthly review auto-generation requirements
+11. Phase 2: monthly review priority alerts
+12. Phase 3: monthly review draft generation requirements
 13. Phase 3: receivable/payable and sub-ledger reconciliation requirements
-14. Phase 3: management accounting monthly report requirements
+14. Phase 3: management accounting monthly report draft requirements
 15. Phase 3: fixed asset management draft support requirements
 16. Phase 4: accounting software conversion hub requirements
-17. Phase 4: individual tax/blue return/Tatsujin support requirements
+17. Phase 4: individual tax/blue return/Tatsujin pre-check support requirements
 18. Phase 4: payroll/labor form support requirements
 19. Phase 4: industry pack requirements
-20. Phase 5: question-to-journal candidate workflow
-21. Phase 5: approval gates and audit log design for assisted automation
+20. Phase 5: question-to-journal draft suggestion workflow
+21. Phase 5: approval gates and audit log design for assisted draft suggestions
 22. Design: UI and report design improvement plan
 23. Expert consultation pack requirements
 
@@ -608,19 +608,19 @@ Use these as Notion task candidates.
 | PR2 leakage test plan | Phase 1 | Codex + Claude | YES | company A/B isolation tests defined |
 | 月次決算コックピット要件整理 | Phase 2 | ChatGPT | YES | statuses and first screen defined |
 | 会社別ルールブック要件整理 | Phase 2 | ChatGPT + Claude | YES | copy rules and company separation defined |
-| 根拠リンク付き仕訳要件整理 | Phase 2 | ChatGPT + Claude | YES | evidence target model defined |
+| 根拠リンク付き仕訳候補要件整理 | Phase 2 | ChatGPT + Claude | YES | evidence target model defined |
 | 資料整理・質問表要件整理 | Phase 2 | ChatGPT | YES | document statuses and reminders defined |
-| 顧客別リスクスコア要件整理 | Phase 2 | ChatGPT | YES | score inputs and labels defined |
+| 月次レビュー優先度要件整理 | Phase 2 | ChatGPT | YES | alert inputs and labels defined |
 | 補助元帳照合要件整理 | Phase 3 | ChatGPT + Claude | YES | reconciliation flow defined |
-| 管理会計・月次資料要件整理 | Phase 3 | ChatGPT | YES | report sections defined |
+| 管理会計・月次資料要件整理 | Phase 3 | ChatGPT | YES | report draft sections defined |
 | 固定資産管理下書き支援要件整理 | Phase 3 | ChatGPT + Claude | YES | human confirmation gates defined |
 | 会計ソフト変換ハブ要件整理 | Phase 4 | ChatGPT + Gemini | YES | source/target format strategy defined |
 | 労務・給与様式補助要件整理 | Phase 4 | ChatGPT | YES | professional confirmation gates defined |
 | 個人確定申告・達人連携要件整理 | Phase 4 | ChatGPT + Gemini | YES | official/sample spec dependency defined |
 | 業種別パック要件整理 | Phase 4 | ChatGPT | YES | first industry pack selected |
 | 専門家相談パック要件整理 | Phase 4 | ChatGPT | YES | no referral-fee premise documented |
-| 質問から仕訳へ要件整理 | Phase 5 | ChatGPT + Claude | YES | candidate-only flow defined |
-| AI補助自動化承認ゲート設計 | Phase 5 | Claude + Codex | YES | no auto-finalization without future approval |
+| 質問から仕訳候補へ要件整理 | Phase 5 | ChatGPT + Claude | YES | draft suggestion flow defined |
+| AI補助ドラフト承認ゲート設計 | Phase 5 | Claude + Codex | YES | no final posting without future approval |
 | デザイン改善計画 | Cross-phase | ChatGPT | YES | target screens and docs selected |
 
 ## Out of Scope For This PR
@@ -629,9 +629,9 @@ Use these as Notion task candidates.
 - Database migration
 - Production DB operation
 - PR2 implementation
-- Tatsujin spec finalization without official/user sample confirmation
+- Tatsujin/JDL/Miroku spec finalization without official/user sample confirmation
 - Electronic filing
 - Automatic tax return filing
 - Definitive tax judgment
 - Definitive labor judgment
-- AI automatic finalization
+- Journal final posting without human review
