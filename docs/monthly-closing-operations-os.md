@@ -4,7 +4,7 @@
 
 This document organizes future requirements for a monthly closing operations OS.
 
-It is a planning document only. It does not add a database migration, Prisma schema change, API, UI implementation, staging migration execution, production operation, tax judgment, labor judgment, or AI automatic finalization.
+It is a planning document only. It does not add a database migration, Prisma schema change, API, UI implementation, staging migration execution, production operation, tax or labor conclusion, or journal finalization.
 
 ## Purpose
 
@@ -18,11 +18,11 @@ It should make these states visible per `companyId` and period:
 - import progress
 - sub-ledger differences
 - recurring monthly journal checks
-- fixed asset review
-- monthly report creation
-- bank material creation
+- fixed asset review items
+- monthly report draft status
+- bank material draft status
 - review findings
-- customer risk
+- monthly review priority alerts
 
 ## PR2 Relationship
 
@@ -37,7 +37,7 @@ PR2 remains limited to:
 - no DB insert in the first step
 - no AI suggestion
 
-Monthly questions, document collection, monthly reviews, and risk scoring are post-PR2 features.
+Monthly questions, document collection, monthly review drafts, and review priority alerts are post-PR2 features.
 
 PR2 only provides the future foundation through parsing, preview, validation, source traceability, and company isolation.
 
@@ -64,14 +64,14 @@ Issue candidates:
    - data import error
    - reconciliation difference
 
-4. 質問表自動生成
-   - unresolved import rows
-   - missing documents
-   - suspicious differences
-   - recurring journal gaps
+4. 質問表ドラフト生成
+   - draft questions from unresolved rows
+   - draft questions from missing documents
+   - draft questions from monthly journal checks
+   - draft questions from reconciliation differences
    - output as draft only
 
-5. 未回答リマインド
+5. 未回答リマインド下書き
    - reminder candidates based on unanswered questions
    - human confirmation before sending
    - no confidential data in logs
@@ -80,9 +80,9 @@ Issue candidates:
    - company-specific rules for accounting, documents, questions, departments, sub-accounts
    - explicit copy only for cross-company reuse
 
-7. 月次レビュー自動生成
+7. 月次レビュー下書き生成
    - review findings from checks
-   - customer explanation memo
+   - customer explanation memo draft
    - internal confirmation items
    - bank material reflection candidates
 
@@ -110,7 +110,7 @@ Issue candidates:
 - question status dashboard
 - company/customer list integration
 
-### Phase 3: Operational Automation Drafts
+### Phase 3: Operational Drafts
 
 - question draft generation
 - reminder draft generation
@@ -119,9 +119,9 @@ Issue candidates:
 
 ### Phase 4: Review and Reporting
 
-- management report integration
-- bank material integration
-- risk score and prioritization
+- management report draft integration
+- bank material draft integration
+- monthly review priority alerts
 
 ## Future DB Candidates
 
@@ -131,13 +131,14 @@ Candidates only. Do not add migrations until each schema is reviewed.
 | --- | --- |
 | `monthly_closing_statuses` | Company/month close status summary |
 | `monthly_close_tasks` | Monthly close tasks and responsibilities |
-| `document_requests` | Required document groups by company/month |
+| `document_requests` | Required materials and arrival status by company/month |
 | `document_request_items` | Individual document arrival status |
 | `questions` | Question sheet header/thread |
-| `question_items` | Individual questions created from review/import findings |
+| `question_items` | Individual questions and status |
 | `question_answers` | Customer or staff answers and review state |
-| `company_rulebook_entries` | Company-specific accounting/document/question rules |
+| `company_rulebook_entries` | Company-specific accounting/document/question rule candidates |
 | `monthly_review_items` | Monthly review findings and status |
+| `monthly_review_priority_alerts` | Review priority indicators and confirmation alerts |
 | `recurring_journal_rules` | Expected recurring journal rules |
 | `recurring_journal_checks` | Monthly check results for recurring journals |
 
@@ -147,7 +148,7 @@ Candidates only. Do not add migrations until each schema is reviewed.
 - API handlers must derive `companyId` from server-side session/current company context.
 - Do not trust `companyId` supplied by the client.
 - Question drafts and review drafts must never include another company's source rows.
-- Company rulebook entries must not be auto-applied across companies.
+- Company rulebook entries must not be applied across companies.
 - Cross-company copy must be explicit, audited, and human-triggered.
 - Logs must not include raw customer answers, document contents, source rows, secrets, tokens, or DB URLs.
 
@@ -160,9 +161,9 @@ Candidates only. Do not add migrations until each schema is reviewed.
 - PR2 implementation
 - staging migration execution
 - production DB operation
-- tax judgment finalization
-- labor judgment finalization
-- AI automatic journal finalization
+- definitive tax conclusion
+- definitive labor conclusion
+- journal finalization without human review
 
 ## Claude Review Request
 
@@ -171,5 +172,5 @@ Please review whether:
 - PR2 scope remains narrow and unchanged
 - monthly OS requirements are correctly placed after PR2
 - companyId isolation rules are sufficient
-- question/review automation is clearly draft-only
-- no tax, labor, or journal finalization is implied
+- question/review flows are clearly draft-only
+- no tax, labor, finance, or journal finalization is implied
