@@ -469,7 +469,6 @@ Targets:
 - 会社別ルールブック
 - 根拠リンク付き仕訳候補
 - 月次仕訳チェック
-- 月次レビュー優先度 / 確認推奨アラート
 
 ### Phase 3: Review, Reconciliation, and Reporting
 
@@ -482,6 +481,7 @@ Targets:
 ### Phase 4: Conversion and Domain Expansion
 
 - 会計ソフト変換ハブ
+- 月次レビュー優先度 / 確認推奨アラート
 - 業種別パック
 - 個人確定申告・青色申告・達人連携 draft support
 - 労務・給与・所定様式記入補助
@@ -581,7 +581,7 @@ Recommended GitHub Issues:
 8. Phase 2: company rulebook requirements
 9. Phase 2: evidence links for journal candidates
 10. Phase 2: monthly recurring journal check requirements
-11. Phase 2: monthly review priority alerts
+11. Phase 4: monthly review priority alerts
 12. Phase 3: monthly review draft generation requirements
 13. Phase 3: receivable/payable and sub-ledger reconciliation requirements
 14. Phase 3: management accounting monthly report draft requirements
@@ -610,7 +610,7 @@ Use these as Notion task candidates.
 | 会社別ルールブック要件整理 | Phase 2 | ChatGPT + Claude | YES | copy rules and company separation defined |
 | 根拠リンク付き仕訳候補要件整理 | Phase 2 | ChatGPT + Claude | YES | evidence target model defined |
 | 資料整理・質問表要件整理 | Phase 2 | ChatGPT | YES | document statuses and reminders defined |
-| 月次レビュー優先度要件整理 | Phase 2 | ChatGPT | YES | alert inputs and labels defined |
+| 月次レビュー優先度要件整理 | Phase 4 | ChatGPT | YES | alert inputs and labels defined |
 | 補助元帳照合要件整理 | Phase 3 | ChatGPT + Claude | YES | reconciliation flow defined |
 | 管理会計・月次資料要件整理 | Phase 3 | ChatGPT | YES | report draft sections defined |
 | 固定資産管理下書き支援要件整理 | Phase 3 | ChatGPT + Claude | YES | human confirmation gates defined |
