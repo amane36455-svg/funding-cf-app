@@ -8,7 +8,7 @@ It is a planning document only. It does not add a database migration, Prisma sch
 
 ## Purpose
 
-The conversion hub should convert accounting exports from one system into another system's import format through an intermediate normalized format.
+The conversion hub should support transforming accounting exports through an intermediate normalized format, then producing reviewed export files for another accounting software.
 
 Target source examples:
 
@@ -21,11 +21,11 @@ Target source examples:
 
 Target output examples:
 
-- Money Forward import CSV
-- Yayoi CSV
-- freee CSV
-- JDL import data
-- Miroku import data
+- Money Forward import CSV draft
+- Yayoi CSV draft
+- freee CSV draft
+- JDL-oriented export assistance after official specs or user-provided samples are confirmed
+- Miroku-oriented export assistance after official specs or user-provided samples are confirmed
 
 ## Core Policy
 
@@ -35,7 +35,7 @@ Reason:
 
 - each accounting software has different columns and semantics
 - vendor formats can change
-- tax category mapping requires human review
+- tax category mapping candidates require human review
 - original data must stay immutable
 - source rows need traceability to output rows
 - future exporters should reuse the same normalized layer
@@ -70,11 +70,11 @@ The conversion hub is a post-PR2 expansion that depends on:
 Issue candidates:
 
 1. 中間フォーマット設計
-   - journal header
-   - journal lines
+   - journal header draft
+   - journal lines draft
    - trial balance lines
    - account master rows
-   - tax category candidate
+   - tax category mapping candidates
    - source row reference
 
 2. 汎用インポーター
@@ -100,9 +100,10 @@ Issue candidates:
    - required fields
    - formatting rules
    - versioning
+   - official specs or user-provided sample dependency
 
 5. MF出力
-   - MF import CSV output
+   - MF import CSV draft output
    - formula injection protection
    - human preview before download
 
@@ -116,6 +117,7 @@ Issue candidates:
 
 8. JDL / ミロク
    - do not hard-code fixed specs without official docs or user-provided samples
+   - provide generic export assistance after format confirmation
    - design as templates, not irreversible assumptions
 
 ## Future DB Candidates
@@ -137,7 +139,7 @@ Candidates only. Do not add migrations until schema review.
 
 - Never overwrite source files.
 - Keep source row number and source hash where possible.
-- Tax category conversion must be `needs_review` unless explicitly confirmed.
+- Tax category mapping candidates must be `needs_review` unless explicitly confirmed.
 - Unknown columns must be visible to the user.
 - Unmapped required fields must block export.
 - Formula injection protection is required for CSV export.
@@ -159,10 +161,10 @@ Candidates only. Do not add migrations until schema review.
 - API implementation
 - PR2 implementation
 - vendor-specific format finalization by speculation
-- JDL/Miroku fixed implementation
+- JDL/Miroku fixed implementation without official specs or user-provided samples
 - direct accounting software posting
-- AI automatic mapping
-- AI automatic journal finalization
+- AI mapping suggestion in PR2
+- journal finalization without human review
 
 ## Claude Review Request
 
@@ -172,4 +174,5 @@ Please review whether:
 - PR2 remains limited to preview/manual mapping
 - vendor-specific formats are not fixed prematurely
 - `mapping_rules` and `export_format_definitions` are separated clearly
+- tax category mapping is candidate-only and review-gated
 - companyId separation rules are sufficient
