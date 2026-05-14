@@ -1,9 +1,10 @@
 const REQUIRED_DATABASE_URLS = ['APP_DATABASE_URL', 'APP_DIRECT_URL'];
 const ALLOWED_HOSTS_ENV = 'STAGING_DB_ALLOWED_HOSTS';
 const ALLOWED_PROTOCOLS = new Set(['postgres:', 'postgresql:']);
+const PRODUCTION_LIKE_MARKERS = ['production', 'prod'];
 
-function fail() {
-  console.error('staging target check failed');
+function fail(reason = 'invalid-target') {
+  console.error(`staging target check failed: ${reason}`);
   process.exit(1);
 }
 
@@ -30,7 +31,13 @@ function parseDatabaseUrl(value) {
     }
 
     const hostname = parsed.hostname.trim().toLowerCase();
-    return hostname || null;
+    const databaseName = parsed.pathname.replace(/^\//, '').trim().toLowerCase();
+
+    if (!hostname) {
+      return null;
+    }
+
+    return { hostname, databaseName };
   } catch {
     return null;
   }
@@ -51,24 +58,48 @@ function parseAllowedHosts() {
   return new Set(hosts);
 }
 
+function hasProductionLikeMarker(parsedUrl) {
+  const targetParts = [parsedUrl.hostname, parsedUrl.databaseName].filter(Boolean);
+
+  return targetParts.some((part) =>
+    PRODUCTION_LIKE_MARKERS.some((marker) =>
+      part === marker ||
+      part.startsWith(`${marker}-`) ||
+      part.startsWith(`${marker}.`) ||
+      part.endsWith(`-${marker}`) ||
+      part.endsWith(`.${marker}`) ||
+      part.includes(`-${marker}-`) ||
+      part.includes(`.${marker}.`),
+    ),
+  );
+}
+
 function main() {
   const allowedHosts = parseAllowedHosts();
 
   if (allowedHosts.size === 0) {
-    fail();
+    fail('allowlist-missing');
   }
 
   for (const envName of REQUIRED_DATABASE_URLS) {
     const value = process.env[envName];
 
     if (!value) {
-      fail();
+      fail('url-missing');
     }
 
-    const hostname = parseDatabaseUrl(value);
+    const parsedUrl = parseDatabaseUrl(value);
 
-    if (!hostname || !allowedHosts.has(hostname)) {
-      fail();
+    if (!parsedUrl) {
+      fail('url-invalid');
+    }
+
+    if (hasProductionLikeMarker(parsedUrl)) {
+      fail('production-like-target');
+    }
+
+    if (!allowedHosts.has(parsedUrl.hostname)) {
+      fail('host-not-allowed');
     }
   }
 
