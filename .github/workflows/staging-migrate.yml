@@ -1,0 +1,48 @@
+name: Staging Migration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Run staging Prisma migrations
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.ref == 'refs/heads/main'
+    env:
+      APP_DATABASE_URL: ${{ secrets.STAGING_APP_DATABASE_URL }}
+      APP_DIRECT_URL: ${{ secrets.STAGING_APP_DIRECT_URL }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Verify staging database env presence
+        shell: bash
+        run: |
+          test -n "$APP_DATABASE_URL"
+          test -n "$APP_DIRECT_URL"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Deploy migrations to staging
+        run: pnpm deploy:migrate
