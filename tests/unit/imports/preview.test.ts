@@ -46,6 +46,22 @@ describe('buildImportPreview', () => {
     expect(result.data.rows[0].cells[1]).toBe('A社, 5月売上');
   });
 
+  it('keeps CSV date serial values raw during parsing', () => {
+    const text = 'date,debit,credit,amount\n46143,cash,sales,1000\n';
+    const buffer = new TextEncoder().encode(text).buffer as ArrayBuffer;
+
+    const result = buildImportPreview({
+      fileName: 'journal.csv',
+      contentType: 'text/csv',
+      size: buffer.byteLength,
+      buffer,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.rows[0].cells[0]).toBe('46143');
+  });
+
   it('detects Shift_JIS CSV when UTF-8 decoding fails', () => {
     const buffer = bytes([
       0x93, 0xfa, 0x95, 0x74, 0x2c, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x0a, 0x32, 0x30, 0x32,
@@ -122,6 +138,29 @@ describe('buildImportPreview', () => {
     expect(result.data.file.sheetName).toBe('仕訳帳');
     expect(result.data.headers).toEqual(['日付', '借方科目', '金額']);
     expect(result.data.rows[0].cells).toEqual(['2026/05/01', '普通預金', '1000']);
+  });
+
+  it('keeps XLSX numeric date serial values raw during parsing', () => {
+    const buffer = createXlsxFixture({
+      sharedStrings: ['date', 'debit', 'amount', 'cash'],
+      sheetXml: [
+        '<worksheet><sheetData>',
+        '<row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c></row>',
+        '<row r="2"><c r="A2"><v>46143</v></c><c r="B2" t="s"><v>3</v></c><c r="C2"><v>1000</v></c></row>',
+        '</sheetData></worksheet>',
+      ].join(''),
+    });
+
+    const result = buildImportPreview({
+      fileName: 'journal.xlsx',
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: buffer.byteLength,
+      buffer,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.rows[0].cells).toEqual(['46143', 'cash', '1000']);
   });
 
   it('rejects invalid xlsx files as parse failures', () => {
