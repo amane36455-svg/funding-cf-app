@@ -23,7 +23,13 @@ const CORE_FIELDS: ImportFieldKey[] = [
   'taxCategory',
 ];
 
-export function ImportPreviewClient({ companyName }: { companyName: string }) {
+export function ImportPreviewClient({
+  canUploadImportPreview,
+  companyName,
+}: {
+  canUploadImportPreview: boolean;
+  companyName: string;
+}) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreviewResult | null>(null);
@@ -40,6 +46,8 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
   const readyCount = mappedRows.length - needsReviewCount;
 
   async function upload(selectedFile: File | null) {
+    if (!canUploadImportPreview) return;
+
     setFile(selectedFile);
     setPreview(null);
     setMapping({});
@@ -95,6 +103,7 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
           onDrop={(event) => {
             event.preventDefault();
             setIsDragging(false);
+            if (!canUploadImportPreview) return;
             void upload(event.dataTransfer.files.item(0));
           }}
         >
@@ -111,17 +120,26 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
                 type="file"
                 accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className="hidden"
+                disabled={!canUploadImportPreview}
                 onChange={(event) => void upload(event.target.files?.item(0) ?? null)}
               />
               <button
                 type="button"
-                className="rounded border px-4 py-2 text-sm"
+                className={`rounded border px-4 py-2 text-sm ${
+                  canUploadImportPreview ? '' : 'cursor-not-allowed bg-slate-100 text-slate-400'
+                }`}
+                disabled={!canUploadImportPreview}
                 onClick={() => inputRef.current?.click()}
               >
                 ファイル選択
               </button>
             </div>
           </div>
+          {!canUploadImportPreview ? (
+            <p className="mt-4 rounded bg-slate-100 px-3 py-2 text-sm text-slate-600">
+              この権限ではCSV/Excelプレビューを実行できません。
+            </p>
+          ) : null}
           {isUploading ? <p className="mt-4 text-sm text-slate-500">解析中...</p> : null}
           {error ? <p className="mt-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
         </div>

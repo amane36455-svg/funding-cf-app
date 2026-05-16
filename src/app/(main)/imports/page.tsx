@@ -1,4 +1,5 @@
 import { ImportPreviewClient } from '@/components/imports/ImportPreviewClient';
+import { canRunImportPreview } from '@/lib/auth/company-scope';
 import { requireUserAndCompany } from '@/lib/auth/session';
 
 export default async function ImportsPage() {
@@ -12,7 +13,10 @@ export default async function ImportsPage() {
           仕訳帳CSV/Excelを解析し、保存前のプレビューと手動マッピングを確認します。
         </p>
       </div>
-      <ImportPreviewClient companyName={context.companyName} />
+      <ImportPreviewClient
+        canUploadImportPreview={canRunImportPreview(context.role)}
+        companyName={context.companyName}
+      />
     </div>
   );
 }

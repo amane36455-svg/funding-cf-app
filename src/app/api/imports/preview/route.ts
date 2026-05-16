@@ -1,3 +1,4 @@
+import { canRunImportPreview } from '@/lib/auth/company-scope';
 import { getUserAndCompanyForApi } from '@/lib/auth/session';
 import { fail, ok } from '@/lib/http/apiResponse';
 import { IMPORT_LIMITS, formatBytes } from '@/lib/imports/limits';
@@ -9,6 +10,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   const context = await getUserAndCompanyForApi();
   if (!context) return fail('UNAUTHORIZED', 'ログインと会社選択が必要です。', 401);
+  if (!canRunImportPreview(context.role)) {
+    return fail('FORBIDDEN', 'この権限ではCSV/Excelプレビューを実行できません。', 403);
+  }
 
   const formData = await request.formData().catch(() => null);
   const file = formData?.get('file');
