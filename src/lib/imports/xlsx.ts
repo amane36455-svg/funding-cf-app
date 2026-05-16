@@ -126,7 +126,9 @@ function readZipEntry(zip: Buffer, entry: ZipEntry): Buffer {
     return compressed;
   }
   if (entry.compression === 8) {
-    const inflated = inflateRawSync(compressed);
+    const inflated = inflateRawSync(compressed, {
+      maxOutputLength: IMPORT_LIMITS.maxXlsxEntryUncompressedBytes,
+    });
     assertSafeInflatedSize(inflated.length);
     return inflated;
   }

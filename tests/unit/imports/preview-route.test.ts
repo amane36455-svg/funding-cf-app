@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { IMPORT_LIMITS } from '@/lib/imports/limits';
 
 const authMock = vi.hoisted(() => ({
   getUserAndCompanyForApi: vi.fn(),
@@ -71,7 +72,7 @@ describe('POST /api/imports/preview', () => {
       formData: async () => ({
         get: () => ({
           name: 'large.csv',
-          size: 10 * 1024 * 1024 + 1,
+          size: IMPORT_LIMITS.maxFileSizeBytes + 1,
           type: 'text/csv',
           arrayBuffer,
         }),

@@ -1,5 +1,5 @@
 export const IMPORT_LIMITS = {
-  maxFileSizeBytes: 10 * 1024 * 1024,
+  maxFileSizeBytes: 4 * 1024 * 1024,
   maxRows: 10_000,
   previewRows: 200,
   maxColumns: 100,

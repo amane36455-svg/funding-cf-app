@@ -149,7 +149,7 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
             <Info label="Columns" value={String(IMPORT_LIMITS.maxColumns)} />
           </dl>
           <p className="mt-4 text-xs text-slate-500">
-            Vercelなど実行環境側のbody上限が先に適用される場合があります。
+            MVPではVercel Functionのpayload制限に合わせ、アップロード上限を4MBにしています。
           </p>
         </div>
       </section>

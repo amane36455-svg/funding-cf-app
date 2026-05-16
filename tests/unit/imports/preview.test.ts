@@ -69,7 +69,7 @@ describe('buildImportPreview', () => {
     const result = buildImportPreview({
       fileName: 'large.csv',
       contentType: 'text/csv',
-      size: 10 * 1024 * 1024 + 1,
+      size: IMPORT_LIMITS.maxFileSizeBytes + 1,
       buffer: new ArrayBuffer(0),
     });
 
