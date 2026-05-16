@@ -45,21 +45,27 @@ export function buildImportPreview(input: ImportPreviewInput): ImportPreviewOutc
   }
 
   try {
-    const parsed =
-      kind === 'csv'
-        ? parseCsvBuffer(input.buffer)
-        : {
-            ...parseXlsxBuffer(input.buffer),
-            encoding: 'xlsx' as ImportEncoding,
-          };
+    if (kind === 'csv') {
+      const parsed = parseCsvBuffer(input.buffer);
+      return normalizeRows({
+        fileName: input.fileName,
+        contentType: input.contentType,
+        size: input.size,
+        kind,
+        encoding: parsed.encoding,
+        rows: parsed.rows,
+        issues: parsed.issues,
+      });
+    }
 
+    const parsed = parseXlsxBuffer(input.buffer);
     return normalizeRows({
       fileName: input.fileName,
       contentType: input.contentType,
       size: input.size,
       kind,
-      encoding: parsed.encoding,
-      sheetName: kind === 'excel' ? parsed.sheetName : undefined,
+      encoding: 'xlsx' as ImportEncoding,
+      sheetName: parsed.sheetName,
       rows: parsed.rows,
       issues: parsed.issues,
     });
