@@ -22,7 +22,8 @@
     "audit:api-scope": "node scripts/audit-api-scope.mjs",
     "db:local:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-local-postgres.ps1",
     "db:local:start": "powershell -ExecutionPolicy Bypass -File scripts/start-local-postgres.ps1",
-    "db:local:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-local-postgres.ps1"
+    "db:local:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-local-postgres.ps1",
+    "notion:issue-sync": "tsx scripts/notion-to-github-issue.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

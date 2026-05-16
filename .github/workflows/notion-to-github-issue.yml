@@ -1,0 +1,66 @@
+name: Notion to GitHub Issue
+
+on:
+  workflow_dispatch:
+  # 定期実行へ切り替える場合は、アイさん確認後に以下を有効化する。
+  # schedule:
+  #   - cron: "0 * * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: notion-to-github-issue
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Create GitHub issues from Notion tasks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+      NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+      NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+      NOTION_TARGET_GITHUB_REPO: funding-cf-app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Verify required secret presence
+        shell: bash
+        run: |
+          missing=0
+          if [ -z "${NOTION_TOKEN:-}" ]; then
+            echo "Missing required secret: NOTION_TOKEN"
+            missing=1
+          fi
+          if [ -z "${NOTION_DATABASE_ID:-}" ] && [ -z "${NOTION_DATA_SOURCE_ID:-}" ]; then
+            echo "Missing required secret: NOTION_DATABASE_ID or NOTION_DATA_SOURCE_ID"
+            missing=1
+          fi
+          if [ -z "${GITHUB_TOKEN:-}" ]; then
+            echo "Missing GitHub Actions token"
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Notion to GitHub issue sync
+        run: pnpm notion:issue-sync
