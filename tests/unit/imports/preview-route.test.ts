@@ -56,4 +56,33 @@ describe('POST /api/imports/preview', () => {
     expect(serialized).not.toContain('company-secret-a');
     expect(serialized).not.toContain('company-b');
   });
+
+  it('rejects oversized files before reading the file body', async () => {
+    const arrayBuffer = vi.fn();
+    authMock.getUserAndCompanyForApi.mockResolvedValue({
+      userId: 'user-a',
+      email: 'user@example.test',
+      companyId: 'company-a',
+      companyName: 'Company A',
+      role: 'OWNER',
+    });
+    const { POST } = await import('@/app/api/imports/preview/route');
+    const request = {
+      formData: async () => ({
+        get: () => ({
+          name: 'large.csv',
+          size: 10 * 1024 * 1024 + 1,
+          type: 'text/csv',
+          arrayBuffer,
+        }),
+      }),
+    } as unknown as Request;
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(413);
+    expect(body.code).toBe('IMPORT_FILE_TOO_LARGE');
+    expect(arrayBuffer).not.toHaveBeenCalled();
+  });
 });

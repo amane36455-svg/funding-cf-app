@@ -1,6 +1,6 @@
 import { IMPORT_LIMITS, formatBytes } from './limits';
 import { parseCsvBuffer } from './csv';
-import { parseXlsxBuffer } from './xlsx';
+import { UnsafeXlsxError, parseXlsxBuffer } from './xlsx';
 import {
   IMPORT_SYSTEM_FIELDS,
   type ImportEncoding,
@@ -69,7 +69,11 @@ export function buildImportPreview(input: ImportPreviewInput): ImportPreviewOutc
       rows: parsed.rows,
       issues: parsed.issues,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof UnsafeXlsxError) {
+      return failure('IMPORT_XLSX_UNSAFE', 'XLSX file is too large or unsafe.');
+    }
+
     return failure(
       'IMPORT_PARSE_FAILED',
       'ファイルを解析できませんでした。形式、文字コード、先頭シートの内容を確認してください。',

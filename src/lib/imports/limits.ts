@@ -4,6 +4,8 @@ export const IMPORT_LIMITS = {
   previewRows: 200,
   maxColumns: 100,
   maxCellLength: 5_000,
+  maxXlsxEntryUncompressedBytes: 25 * 1024 * 1024,
+  maxXlsxTotalUncompressedBytes: 50 * 1024 * 1024,
 } as const;
 
 export function formatBytes(bytes: number): string {

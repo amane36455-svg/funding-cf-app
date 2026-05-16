@@ -9,7 +9,7 @@ import type {
   ImportPreviewRow,
   ImportSystemField,
 } from '@/lib/imports/types';
-import { formatBytes } from '@/lib/imports/limits';
+import { IMPORT_LIMITS, formatBytes } from '@/lib/imports/limits';
 
 type ApiResponse<T> =
   | { ok: true; data: T }
@@ -143,11 +143,14 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
           <div className="font-semibold">現在会社</div>
           <div className="mt-1 truncate text-slate-600">{companyName}</div>
           <dl className="mt-4 space-y-2 text-xs text-slate-600">
-            <Info label="File limit" value="10 MB" />
-            <Info label="Rows" value="10,000" />
-            <Info label="Preview" value="200 rows" />
-            <Info label="Columns" value="100" />
+            <Info label="File limit" value={formatBytes(IMPORT_LIMITS.maxFileSizeBytes)} />
+            <Info label="Rows" value={IMPORT_LIMITS.maxRows.toLocaleString()} />
+            <Info label="Preview" value={`${IMPORT_LIMITS.previewRows} rows`} />
+            <Info label="Columns" value={String(IMPORT_LIMITS.maxColumns)} />
           </dl>
+          <p className="mt-4 text-xs text-slate-500">
+            Vercelなど実行環境側のbody上限が先に適用される場合があります。
+          </p>
         </div>
       </section>
 

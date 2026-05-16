@@ -16,6 +16,13 @@ export type XlsxParseResult = {
   issues: ImportIssue[];
 };
 
+export class UnsafeXlsxError extends Error {
+  constructor() {
+    super('XLSX file is too large or unsafe');
+    this.name = 'UnsafeXlsxError';
+  }
+}
+
 export function parseXlsxBuffer(buffer: ArrayBuffer): XlsxParseResult {
   const zip = Buffer.from(buffer);
   const entries = readZipEntries(zip);
@@ -41,6 +48,7 @@ function readZipEntries(zip: Buffer): Map<string, ZipEntry> {
   const entries = new Map<string, ZipEntry>();
   let offset = centralDirectoryOffset;
   const end = centralDirectoryOffset + centralDirectorySize;
+  let totalUncompressedSize = 0;
 
   while (offset < end) {
     if (zip.readUInt32LE(offset) !== 0x02014b50) {
@@ -58,6 +66,12 @@ function readZipEntries(zip: Buffer): Map<string, ZipEntry> {
       .subarray(offset + 46, offset + 46 + fileNameLength)
       .toString('utf8')
       .replaceAll('\\', '/');
+
+    assertSafeUncompressedSize(uncompressedSize);
+    totalUncompressedSize += uncompressedSize;
+    if (totalUncompressedSize > IMPORT_LIMITS.maxXlsxTotalUncompressedBytes) {
+      throw new UnsafeXlsxError();
+    }
 
     entries.set(name, {
       name,
@@ -96,6 +110,7 @@ function readOptionalZipText(zip: Buffer, entries: Map<string, ZipEntry>, name: 
 }
 
 function readZipEntry(zip: Buffer, entry: ZipEntry): Buffer {
+  assertSafeUncompressedSize(entry.uncompressedSize);
   const offset = entry.localHeaderOffset;
   if (zip.readUInt32LE(offset) !== 0x04034b50) {
     throw new Error('Invalid XLSX local header');
@@ -106,9 +121,28 @@ function readZipEntry(zip: Buffer, entry: ZipEntry): Buffer {
   const dataStart = offset + 30 + fileNameLength + extraLength;
   const compressed = zip.subarray(dataStart, dataStart + entry.compressedSize);
 
-  if (entry.compression === 0) return compressed;
-  if (entry.compression === 8) return inflateRawSync(compressed);
+  if (entry.compression === 0) {
+    assertSafeInflatedSize(compressed.length);
+    return compressed;
+  }
+  if (entry.compression === 8) {
+    const inflated = inflateRawSync(compressed);
+    assertSafeInflatedSize(inflated.length);
+    return inflated;
+  }
   throw new Error(`Unsupported XLSX compression method: ${entry.compression}`);
+}
+
+function assertSafeUncompressedSize(size: number): void {
+  if (size > IMPORT_LIMITS.maxXlsxEntryUncompressedBytes) {
+    throw new UnsafeXlsxError();
+  }
+}
+
+function assertSafeInflatedSize(size: number): void {
+  if (size > IMPORT_LIMITS.maxXlsxEntryUncompressedBytes) {
+    throw new UnsafeXlsxError();
+  }
 }
 
 function readFirstSheet(workbookXml: string): { name: string; relationshipId: string } {
