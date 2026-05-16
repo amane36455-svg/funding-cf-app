@@ -6,26 +6,13 @@ import type {
   ImportIssue,
   ImportMapping,
   ImportPreviewResult,
-  ImportPreviewRow,
-  ImportSystemField,
 } from '@/lib/imports/types';
 import { IMPORT_LIMITS, formatBytes } from '@/lib/imports/limits';
+import { buildMappedPreviewRows } from '@/lib/imports/mapping-preview';
 
 type ApiResponse<T> =
   | { ok: true; data: T }
   | { ok: false; code: string; message: string; details?: { issues?: ImportIssue[] } };
-
-type MappedRowIssue = {
-  field?: ImportFieldKey;
-  message: string;
-};
-
-type MappedRow = {
-  rowNumber: number;
-  status: 'ready' | 'needs_review';
-  values: Partial<Record<ImportFieldKey, string>>;
-  issues: MappedRowIssue[];
-};
 
 const CORE_FIELDS: ImportFieldKey[] = [
   'tradeDate',
@@ -47,7 +34,7 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
 
   const mappedRows = useMemo(() => {
     if (!preview) return [];
-    return validateRows(preview.rows, preview.systemFields, mapping);
+    return buildMappedPreviewRows(preview.rows, preview.systemFields, mapping);
   }, [mapping, preview]);
   const needsReviewCount = mappedRows.filter((row) => row.status === 'needs_review').length;
   const readyCount = mappedRows.length - needsReviewCount;
@@ -223,7 +210,7 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
                         {preview.systemFields.find((item) => item.key === field)?.label}
                       </th>
                     ))}
-                    <th className="px-3 py-2">Issues</th>
+                    <th className="px-3 py-2">Issues / Notes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -280,72 +267,6 @@ export function ImportPreviewClient({ companyName }: { companyName: string }) {
       ) : null}
     </div>
   );
-}
-
-function validateRows(
-  rows: ImportPreviewRow[],
-  fields: ImportSystemField[],
-  mapping: ImportMapping,
-): MappedRow[] {
-  const requiredFields = fields.filter((field) => field.required);
-  const missingMappings = new Set(
-    requiredFields.filter((field) => mapping[field.key] === undefined).map((field) => field.key),
-  );
-
-  return rows.map((row) => {
-    const values: Partial<Record<ImportFieldKey, string>> = {};
-    const issues: MappedRowIssue[] = [];
-
-    for (const field of fields) {
-      const columnIndex = mapping[field.key];
-      if (columnIndex === undefined) continue;
-      values[field.key] = row.cells[columnIndex]?.trim() ?? '';
-    }
-
-    for (const field of requiredFields) {
-      if (missingMappings.has(field.key)) {
-        issues.push({ field: field.key, message: `${field.label}の列が未選択です。` });
-        continue;
-      }
-
-      const value = values[field.key]?.trim() ?? '';
-      if (!value) {
-        issues.push({ field: field.key, message: `${field.label}が空です。` });
-        continue;
-      }
-
-      if (field.type === 'date' && !isValidDate(value)) {
-        issues.push({ field: field.key, message: '日付形式を確認してください。' });
-      }
-
-      if (field.type === 'amount' && !isValidAmount(value)) {
-        issues.push({ field: field.key, message: '金額形式を確認してください。' });
-      }
-    }
-
-    return {
-      rowNumber: row.rowNumber,
-      status: issues.length > 0 ? 'needs_review' : 'ready',
-      values,
-      issues,
-    };
-  });
-}
-
-function isValidDate(value: string): boolean {
-  const normalized = value.replaceAll('.', '/').replaceAll('-', '/');
-  const match = normalized.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
-  if (!match) return false;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-}
-
-function isValidAmount(value: string): boolean {
-  const normalized = value.replaceAll(',', '').replaceAll('￥', '').replaceAll('¥', '').trim();
-  return normalized !== '' && Number.isFinite(Number(normalized));
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
