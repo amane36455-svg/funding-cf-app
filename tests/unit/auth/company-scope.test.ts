@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCurrentCompanyId, userCompanyAccessWhere } from '@/lib/auth/company-scope';
+import {
+  canRunImportPreview,
+  resolveCurrentCompanyId,
+  userCompanyAccessWhere,
+  type AppRole,
+} from '@/lib/auth/company-scope';
 
 const memberships = [
   {
@@ -43,5 +48,17 @@ describe('company scope helpers', () => {
         companyId: 'company-a',
       },
     });
+  });
+
+  it('allows import preview only for upload-capable roles', () => {
+    const allowed: AppRole[] = ['OWNER', 'ADMIN', 'STAFF', 'MEMBER'];
+    const denied: AppRole[] = ['REVIEWER', 'VIEWER'];
+
+    for (const role of allowed) {
+      expect(canRunImportPreview(role)).toBe(true);
+    }
+    for (const role of denied) {
+      expect(canRunImportPreview(role)).toBe(false);
+    }
   });
 });
