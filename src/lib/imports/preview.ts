@@ -16,6 +16,10 @@ export type ImportPreviewInput = {
   buffer: ArrayBuffer;
 };
 
+export type ImportPreviewOptions = {
+  rowLimit?: number;
+};
+
 export type ImportPreviewOutcome =
   | { ok: true; data: ImportPreviewResult }
   | {
@@ -26,7 +30,7 @@ export type ImportPreviewOutcome =
       issues: ImportIssue[];
     };
 
-export function buildImportPreview(input: ImportPreviewInput): ImportPreviewOutcome {
+export function buildImportPreview(input: ImportPreviewInput, options: ImportPreviewOptions = {}): ImportPreviewOutcome {
   if (input.size <= 0) {
     return failure('IMPORT_FILE_EMPTY', 'ファイルが空です。CSVまたはxlsxファイルを選択してください。');
   }
@@ -55,6 +59,7 @@ export function buildImportPreview(input: ImportPreviewInput): ImportPreviewOutc
         encoding: parsed.encoding,
         rows: parsed.rows,
         issues: parsed.issues,
+        rowLimit: options.rowLimit,
       });
     }
 
@@ -68,6 +73,7 @@ export function buildImportPreview(input: ImportPreviewInput): ImportPreviewOutc
       sheetName: parsed.sheetName,
       rows: parsed.rows,
       issues: parsed.issues,
+      rowLimit: options.rowLimit,
     });
   } catch (error) {
     if (error instanceof UnsafeXlsxError) {
@@ -90,6 +96,7 @@ function normalizeRows(args: {
   sheetName?: string;
   rows: string[][];
   issues: ImportIssue[];
+  rowLimit?: number;
 }): ImportPreviewOutcome {
   const [headerRow, ...dataRows] = args.rows;
   const issues = [...args.issues];
@@ -117,7 +124,8 @@ function normalizeRows(args: {
   const headers = normalizeWidth(headerRow, totalColumns).map((header, index) =>
     header.trim() || `未命名列${index + 1}`,
   );
-  const previewRows = dataRows.slice(0, IMPORT_LIMITS.previewRows).map((row, index) => ({
+  const rowLimit = args.rowLimit ?? IMPORT_LIMITS.previewRows;
+  const previewRows = dataRows.slice(0, rowLimit).map((row, index) => ({
     rowNumber: index + 2,
     cells: normalizeWidth(row, headers.length),
   }));
@@ -141,7 +149,7 @@ function normalizeRows(args: {
       truncated: {
         rows: dataRows.length > IMPORT_LIMITS.maxRows,
         columns: totalColumns > IMPORT_LIMITS.maxColumns,
-        previewRows: dataRows.length > IMPORT_LIMITS.previewRows,
+        previewRows: dataRows.length > rowLimit,
       },
       issues,
       systemFields: IMPORT_SYSTEM_FIELDS,
