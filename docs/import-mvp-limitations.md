@@ -33,6 +33,10 @@ The MVP covers import preview through draft save. It does not confirm journal en
 - Maximum row and column limits are enforced before processing.
 - Excel date serial values are normalized only when the column is manually mapped to a date field.
 - Numeric values in amount or unmapped columns are not treated as dates.
+- Import preview is rate limited on a best-effort in-memory basis.
+- Import draft save is rate limited on a best-effort in-memory basis.
+- Rate limits are per serverless instance and are not a strict global limit.
+- IP fallback keys are hashed; `RATE_LIMIT_HASH_SALT` may be configured, but its value must never be shared.
 - The saved data is a draft and is not a confirmed journal.
 
 ## Not Supported Yet
@@ -45,7 +49,6 @@ The MVP covers import preview through draft save. It does not confirm journal en
 - raw file storage.
 - AI suggestion.
 - mapping_rules CRUD.
-- rate limit.
 - `needs_review` correction UI.
 - automatic journal finalization.
 - direct registration to Money Forward.

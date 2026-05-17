@@ -6,6 +6,7 @@ import { IMPORT_LIMITS, formatBytes } from '@/lib/imports/limits';
 import { buildMappedPreviewRows, type ImportMappedRow } from '@/lib/imports/mapping-preview';
 import { buildImportPreview } from '@/lib/imports/preview';
 import { IMPORT_SYSTEM_FIELDS, type ImportFieldKey, type ImportMapping, type ImportPreviewResult } from '@/lib/imports/types';
+import { checkImportApiRateLimit, rateLimitedResponse } from '@/lib/rate-limit/import-rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,13 @@ const ALLOWED_MAPPING_KEYS = new Set<ImportFieldKey>(IMPORT_SYSTEM_FIELDS.map((f
 
 export async function POST(request: Request) {
   const context = await getUserAndCompanyForApi();
+  const rateLimit = await checkImportApiRateLimit({
+    action: 'save',
+    request,
+    userId: context?.userId,
+  });
+  if (!rateLimit.allowed) return rateLimitedResponse(rateLimit.retryAfterSeconds);
+
   if (!context) return fail('UNAUTHORIZED', 'Login and company selection are required.', 401);
   if (!canSaveImportBatch(context.role)) {
     return fail('FORBIDDEN', 'You do not have permission to save import drafts.', 403);

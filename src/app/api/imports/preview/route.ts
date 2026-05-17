@@ -3,12 +3,19 @@ import { getUserAndCompanyForApi } from '@/lib/auth/session';
 import { fail, ok } from '@/lib/http/apiResponse';
 import { IMPORT_LIMITS, formatBytes } from '@/lib/imports/limits';
 import { buildImportPreview } from '@/lib/imports/preview';
+import { checkImportApiRateLimit, rateLimitedResponse } from '@/lib/rate-limit/import-rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   const context = await getUserAndCompanyForApi();
+  const rateLimit = await checkImportApiRateLimit({
+    action: 'preview',
+    request,
+    userId: context?.userId,
+  });
+  if (!rateLimit.allowed) return rateLimitedResponse(rateLimit.retryAfterSeconds);
   if (!context) return fail('UNAUTHORIZED', 'ログインと会社選択が必要です。', 401);
   if (!canRunImportPreview(context.role)) {
     return fail('FORBIDDEN', 'この権限ではCSV/Excelプレビューを実行できません。', 403);
