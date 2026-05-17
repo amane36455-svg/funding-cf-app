@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   IMPORT_RATE_LIMIT_MESSAGE,
+  IMPORT_RATE_LIMITS,
   InMemoryRateLimiter,
   buildImportRateLimitKey,
   getClientIpForRateLimit,
@@ -24,6 +25,18 @@ describe('import API rate limit helpers', () => {
 
     expect(await limiter.check('import.preview:user:user-a', 1, 60_000)).toEqual({ allowed: true });
     expect(await limiter.check('import.preview:user:user-b', 1, 60_000)).toEqual({ allowed: true });
+  });
+
+  it('supports a separate cancel action key and limit', async () => {
+    const limiter = new InMemoryRateLimiter();
+
+    expect(IMPORT_RATE_LIMITS.cancel).toEqual({
+      actionName: 'import.cancel',
+      limit: 10,
+      windowMs: 60_000,
+    });
+    expect(await limiter.check('import.cancel:user:user-a', 10, 60_000)).toEqual({ allowed: true });
+    expect(await limiter.check('import.cancel:user:user-b', 10, 60_000)).toEqual({ allowed: true });
   });
 
   it('extracts the first forwarded IP before falling back to x-real-ip', () => {
