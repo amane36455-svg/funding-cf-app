@@ -9,6 +9,13 @@ import type {
 } from '@/lib/imports/types';
 import { IMPORT_LIMITS, formatBytes } from '@/lib/imports/limits';
 import { buildMappedPreviewRows } from '@/lib/imports/mapping-preview';
+import {
+  IMPORT_SAVE_CONFIRM_MESSAGE,
+  IMPORT_SAVE_DISABLED_MESSAGE,
+  buildImportSaveFormData,
+  getImportSaveAvailability,
+  type ImportSaveResult,
+} from '@/lib/imports/save-ui';
 
 type ApiResponse<T> =
   | { ok: true; data: T }
@@ -36,7 +43,10 @@ export function ImportPreviewClient({
   const [mapping, setMapping] = useState<ImportMapping>({});
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveResult, setSaveResult] = useState<ImportSaveResult | null>(null);
 
   const mappedRows = useMemo(() => {
     if (!preview) return [];
@@ -44,6 +54,16 @@ export function ImportPreviewClient({
   }, [mapping, preview]);
   const needsReviewCount = mappedRows.filter((row) => row.status === 'needs_review').length;
   const readyCount = mappedRows.length - needsReviewCount;
+  const saveAvailability = useMemo(() => {
+    if (!preview) return { canSave: false, missingRequiredFields: [] };
+    return getImportSaveAvailability({
+      file,
+      fields: preview.systemFields,
+      isSaving,
+      mapping,
+      readyRows: readyCount,
+    });
+  }, [file, isSaving, mapping, preview, readyCount]);
 
   async function upload(selectedFile: File | null) {
     if (!canUploadImportPreview) return;
@@ -52,6 +72,8 @@ export function ImportPreviewClient({
     setPreview(null);
     setMapping({});
     setError(null);
+    setSaveError(null);
+    setSaveResult(null);
 
     if (!selectedFile) return;
 
@@ -77,6 +99,8 @@ export function ImportPreviewClient({
   }
 
   function updateMapping(field: ImportFieldKey, value: string) {
+    setSaveError(null);
+    setSaveResult(null);
     setMapping((current) => {
       const next = { ...current };
       if (value === '') {
@@ -86,6 +110,31 @@ export function ImportPreviewClient({
       }
       return next;
     });
+  }
+
+  async function saveDraft() {
+    if (!file || !preview || !saveAvailability.canSave) return;
+    if (!window.confirm(IMPORT_SAVE_CONFIRM_MESSAGE)) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveResult(null);
+    try {
+      const response = await fetch('/api/imports/save', {
+        method: 'POST',
+        body: buildImportSaveFormData(file, mapping),
+      });
+      const body = (await response.json()) as ApiResponse<ImportSaveResult>;
+      if (!body.ok) {
+        setSaveError(body.message);
+        return;
+      }
+      setSaveResult(body.data);
+    } catch {
+      setSaveError('下書き保存に失敗しました。時間をおいて再度お試しください。');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -208,6 +257,38 @@ export function ImportPreviewClient({
                 </label>
               ))}
             </div>
+            <div className="mt-5 rounded-md border bg-slate-50 p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <p className="text-sm text-slate-600">{IMPORT_SAVE_CONFIRM_MESSAGE}</p>
+                <button
+                  type="button"
+                  className={`rounded px-4 py-2 text-sm font-medium ${
+                    saveAvailability.canSave
+                      ? 'bg-slate-900 text-white'
+                      : 'cursor-not-allowed bg-slate-200 text-slate-500'
+                  }`}
+                  disabled={!saveAvailability.canSave}
+                  onClick={() => void saveDraft()}
+                >
+                  {isSaving ? '保存中...' : '下書き保存'}
+                </button>
+              </div>
+              {!saveAvailability.canSave && !isSaving ? (
+                <p className="mt-3 text-sm text-slate-500">{IMPORT_SAVE_DISABLED_MESSAGE}</p>
+              ) : null}
+              {saveResult ? (
+                <div className="mt-3 rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  <p className="font-medium">下書き保存が完了しました。</p>
+                  <dl className="mt-2 grid gap-1 sm:grid-cols-4">
+                    <SaveResultItem label="savedRows" value={saveResult.savedRows} />
+                    <SaveResultItem label="skippedRows" value={saveResult.skippedRows} />
+                    <SaveResultItem label="needsReviewRows" value={saveResult.needsReviewRows} />
+                    <SaveResultItem label="importBatchId" value={saveResult.importBatchId} />
+                  </dl>
+                </div>
+              ) : null}
+              {saveError ? <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{saveError}</p> : null}
+            </div>
           </section>
 
           <section className="overflow-hidden rounded-md border bg-white">
@@ -301,6 +382,15 @@ function Info({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-3">
       <dt>{label}</dt>
       <dd className="font-medium text-slate-900">{value}</dd>
+    </div>
+  );
+}
+
+function SaveResultItem({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div>
+      <dt className="text-xs text-emerald-700">{label}</dt>
+      <dd className="break-all font-semibold">{value}</dd>
     </div>
   );
 }
