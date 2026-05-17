@@ -19,6 +19,8 @@ model User {
   companies    Company[]     @relation("CompanyOwner")
   preference   UserPreference?
   documents    GeneratedDocument[]
+  importedFiles ImportedFile[] @relation("ImportedFileUploader")
+  importBatches ImportBatch[]  @relation("ImportBatchCreator")
 
   @@map("users")
 }
@@ -45,6 +47,10 @@ model Company {
   cfResults          CfClassificationResult[]
   documents          GeneratedDocument[]
   syncHistories      MfSyncHistory[]
+  importedFiles      ImportedFile[]
+  importBatches      ImportBatch[]
+  journalEntries     JournalEntry[]
+  journalEntryLines  JournalEntryLine[]
 
   @@index([status])
   @@index([industry])
@@ -58,6 +64,27 @@ enum CompanyRole {
   REVIEWER
   VIEWER
   MEMBER
+}
+
+enum ImportFileKind {
+  CSV
+  EXCEL
+}
+
+enum ImportBatchStatus {
+  DRAFT
+  NEEDS_REVIEW
+  CANCELLED
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  NEEDS_REVIEW
+}
+
+enum JournalEntryLineSide {
+  DEBIT
+  CREDIT
 }
 
 model UserCompany {
@@ -88,6 +115,94 @@ model UserPreference {
 
   @@index([currentCompanyId])
   @@map("user_preferences")
+}
+
+model ImportedFile {
+  id               String       @id @default(uuid()) @db.Uuid
+  companyId        String       @map("company_id") @db.Uuid
+  uploadedByUserId String       @map("uploaded_by_user_id") @db.Uuid
+  originalFilename String       @map("original_filename")
+  fileKind         ImportFileKind @map("file_kind")
+  encoding         String?
+  sheetName        String?      @map("sheet_name")
+  fileSizeBytes    Int          @map("file_size_bytes")
+  storageRef       String?      @map("storage_ref")
+  previewSnapshot  Json?        @map("preview_snapshot")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  uploadedBy       User         @relation("ImportedFileUploader", fields: [uploadedByUserId], references: [id])
+  batches          ImportBatch[]
+
+  @@index([companyId, createdAt])
+  @@index([companyId, uploadedByUserId])
+  @@map("imported_files")
+}
+
+model ImportBatch {
+  id                  String            @id @default(uuid()) @db.Uuid
+  companyId           String            @map("company_id") @db.Uuid
+  importedFileId      String            @map("imported_file_id") @db.Uuid
+  createdByUserId     String            @map("created_by_user_id") @db.Uuid
+  status              ImportBatchStatus @default(DRAFT)
+  readyRowCount       Int               @default(0) @map("ready_row_count")
+  needsReviewRowCount Int               @default(0) @map("needs_review_row_count")
+  skippedRowCount     Int               @default(0) @map("skipped_row_count")
+  mappingSnapshot     Json              @map("mapping_snapshot")
+  validationSummary   Json?             @map("validation_summary")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  company             Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  importedFile        ImportedFile      @relation(fields: [importedFileId], references: [id], onDelete: Cascade)
+  createdBy           User              @relation("ImportBatchCreator", fields: [createdByUserId], references: [id])
+  journalEntries      JournalEntry[]
+
+  @@index([companyId, status])
+  @@index([companyId, importedFileId])
+  @@index([companyId, createdByUserId])
+  @@index([companyId, createdAt])
+  @@map("import_batches")
+}
+
+model JournalEntry {
+  id              String             @id @default(uuid()) @db.Uuid
+  companyId       String             @map("company_id") @db.Uuid
+  importBatchId   String             @map("import_batch_id") @db.Uuid
+  sourceRowNumber Int                @map("source_row_number")
+  tradeDate       DateTime           @map("trade_date") @db.Date
+  description     String?            @db.Text
+  status          JournalEntryStatus @default(DRAFT)
+  rawRowSummary   Json?              @map("raw_row_summary")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  company         Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  importBatch     ImportBatch        @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
+  lines           JournalEntryLine[]
+
+  @@unique([companyId, importBatchId, sourceRowNumber])
+  @@index([companyId, importBatchId])
+  @@index([companyId, tradeDate])
+  @@index([companyId, status])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id               String               @id @default(uuid()) @db.Uuid
+  companyId        String               @map("company_id") @db.Uuid
+  journalEntryId   String               @map("journal_entry_id") @db.Uuid
+  lineNo           Int                  @map("line_no")
+  side             JournalEntryLineSide
+  accountName      String               @map("account_name")
+  subAccountName   String?              @map("sub_account_name")
+  departmentName   String?              @map("department_name")
+  taxCategory      String?              @map("tax_category")
+  amount           Decimal              @db.Decimal(18, 2)
+  createdAt        DateTime             @default(now()) @map("created_at")
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  journalEntry     JournalEntry         @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, journalEntryId])
+  @@index([companyId, side])
+  @@map("journal_entry_lines")
 }
 
 model MfConnection {
