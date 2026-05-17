@@ -1,0 +1,7 @@
+CREATE TYPE "ImportFileKind" AS ENUM ('CSV', 'EXCEL');
+
+CREATE TYPE "ImportBatchStatus" AS ENUM ('DRAFT', 'NEEDS_REVIEW', 'CANCELLED');
+
+CREATE TYPE "JournalEntryStatus" AS ENUM ('DRAFT', 'NEEDS_REVIEW');
+
+CREATE TYPE "JournalEntryLineSide" AS ENUM ('DEBIT', 'CREDIT');
