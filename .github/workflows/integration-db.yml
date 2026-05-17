@@ -1,0 +1,79 @@
+name: Integration DB
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'prisma/**'
+      - 'tests/integration-db/**'
+      - '.github/workflows/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'vitest.workspace.ts'
+      - 'scripts/assert-test-db.mjs'
+      - 'docs/import-access-boundary-tests.md'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  integration-db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: funding_cf_test
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d funding_cf_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_HOST: 127.0.0.1
+      TEST_DATABASE_PORT: 5432
+      TEST_DATABASE_NAME: funding_cf_test
+      TEST_DATABASE_USER: postgres
+      TEST_DATABASE_ALLOWED_HOSTS: 127.0.0.1,localhost
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Set test database env
+        shell: bash
+        run: |
+          database_url="postgresql://${TEST_DATABASE_USER}@${TEST_DATABASE_HOST}:${TEST_DATABASE_PORT}/${TEST_DATABASE_NAME}"
+          echo "::add-mask::$database_url"
+          echo "APP_DATABASE_URL=$database_url" >> "$GITHUB_ENV"
+          echo "APP_DIRECT_URL=$database_url" >> "$GITHUB_ENV"
+
+      - name: Assert test database target
+        run: node scripts/assert-test-db.mjs
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Deploy migrations to test database
+        run: pnpm deploy:migrate
+
+      - name: Run real DB integration tests
+        run: pnpm test:integration:db
