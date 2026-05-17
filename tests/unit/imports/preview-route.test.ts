@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IMPORT_LIMITS } from '@/lib/imports/limits';
 import type { AppRole } from '@/lib/auth/company-scope';
+import { resetImportRateLimitForTests } from '@/lib/rate-limit/import-rate-limit';
 
 const authMock = vi.hoisted(() => ({
   getUserAndCompanyForApi: vi.fn(),
@@ -11,6 +12,7 @@ vi.mock('@/lib/auth/session', () => authMock);
 describe('POST /api/imports/preview', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    resetImportRateLimitForTests();
   });
 
   it('rejects unauthenticated requests', async () => {
@@ -23,6 +25,26 @@ describe('POST /api/imports/preview', () => {
     expect(response.status).toBe(401);
     expect(body.ok).toBe(false);
     expect(body.code).toBe('UNAUTHORIZED');
+  });
+
+  it('uses a hashed IP fallback for repeated unauthenticated requests', async () => {
+    authMock.getUserAndCompanyForApi.mockResolvedValue(null);
+    const { POST } = await import('@/app/api/imports/preview/route');
+
+    for (let index = 0; index < 5; index += 1) {
+      const response = await POST(createUnauthenticatedRequestWithIp());
+      expect(response.status).toBe(401);
+    }
+
+    const response = await POST(createUnauthenticatedRequestWithIp());
+    const body = await response.json();
+    const serialized = JSON.stringify(body);
+
+    expect(response.status).toBe(429);
+    expect(body.code).toBe('RATE_LIMITED');
+    expect(serialized).not.toContain('203.0.113.10');
+    expect(serialized).not.toContain('companyId');
+    expect(serialized).not.toContain('userId');
   });
 
   it.each(['VIEWER', 'REVIEWER'] as const)('rejects %s before reading the request body', async (role) => {
@@ -120,7 +142,58 @@ describe('POST /api/imports/preview', () => {
     expect(body.code).toBe('IMPORT_FILE_TOO_LARGE');
     expect(arrayBuffer).not.toHaveBeenCalled();
   });
+
+  it('rate limits preview before reading the request body', async () => {
+    authMock.getUserAndCompanyForApi.mockResolvedValue(createContext('OWNER'));
+    const { POST } = await import('@/app/api/imports/preview/route');
+
+    for (let index = 0; index < 5; index += 1) {
+      const response = await POST(createCsvPreviewRequest());
+      expect(response.status).toBe(200);
+    }
+
+    const formData = vi.fn();
+    const response = await POST({ headers: new Headers(), formData } as unknown as Request);
+    const body = await response.json();
+    const serialized = JSON.stringify(body);
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBeTruthy();
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe('RATE_LIMITED');
+    expect(body.retryAfterSeconds).toEqual(expect.any(Number));
+    expect(formData).not.toHaveBeenCalled();
+    expect(serialized).not.toContain('company-secret-a');
+    expect(serialized).not.toContain('user-a');
+    expect(serialized).not.toContain('OWNER');
+    expect(serialized).not.toContain('journal.csv');
+  });
 });
+
+function createCsvPreviewRequest(): Request {
+  const formData = new FormData();
+  formData.append(
+    'file',
+    new Blob(['date,debit,credit,amount\n2026/05/01,cash,sales,1000\n'], {
+      type: 'text/csv',
+    }),
+    'journal.csv',
+  );
+
+  return new Request('http://localhost/api/imports/preview', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+function createUnauthenticatedRequestWithIp(): Request {
+  return new Request('http://localhost/api/imports/preview', {
+    method: 'POST',
+    headers: {
+      'x-forwarded-for': '203.0.113.10',
+    },
+  });
+}
 
 function createContext(role: AppRole) {
   return {

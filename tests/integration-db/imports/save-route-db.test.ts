@@ -73,6 +73,41 @@ describe('POST /api/imports/save real DB boundaries', () => {
     expect(savedLines).toBe(2);
   });
 
+  it('rate limits save before reading upload data or starting another persistence attempt', async () => {
+    const { companyA, userA } = await prisma.$transaction((tx) => seedTwoCompanyFixture(tx));
+    authMock.getUserAndCompanyForApi.mockResolvedValue(
+      createContext({ companyId: companyA.id, role: 'OWNER', userId: userA.id }),
+    );
+    const { POST } = await import('@/app/api/imports/save/route');
+
+    for (let index = 0; index < 3; index += 1) {
+      const response = await POST(createCsvSaveRequest());
+      expect(response.status).toBe(200);
+    }
+
+    const formData = vi.fn();
+    const response = await POST({ headers: new Headers(), formData } as unknown as Request);
+    const body = await response.json();
+    const serialized = JSON.stringify(body);
+
+    const batches = await prisma.importBatch.count({ where: { companyId: companyA.id } });
+    const entries = await prisma.journalEntry.count({ where: { companyId: companyA.id } });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBeTruthy();
+    expect(body.code).toBe('RATE_LIMITED');
+    expect(body.retryAfterSeconds).toEqual(expect.any(Number));
+    expect(formData).not.toHaveBeenCalled();
+    expect(batches).toBe(3);
+    expect(entries).toBe(3);
+    expect(serialized).not.toContain(companyA.id);
+    expect(serialized).not.toContain(userA.id);
+    expect(serialized).not.toContain('OWNER');
+    expect(serialized).not.toContain('journal.csv');
+    expect(serialized).not.toContain('cash');
+    expect(serialized).not.toContain('sales');
+  });
+
   it('ignores client-submitted companyId and saves only to the server-side current company', async () => {
     const { companyA, companyB, userA } = await prisma.$transaction((tx) => seedTwoCompanyFixture(tx));
     authMock.getUserAndCompanyForApi.mockResolvedValue(
