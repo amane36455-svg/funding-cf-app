@@ -79,6 +79,8 @@ Saved data policy:
 - Staging smoke tests must use dummy data only.
 - Production DB operations require explicit human approval.
 - Manual SQL cleanup should not be used as part of normal import testing.
+- Treat `/imports` screenshots and screen shares as sensitive because the screen can show file names, mapped row values, JSON preview values, and import IDs.
+- Do not paste JSON preview text, screenshots, or `importBatchId` values into Issues, PRs, chat, Notion, or logs unless the content is dummy data or fully redacted.
 
 ## Remaining Draft Data
 
