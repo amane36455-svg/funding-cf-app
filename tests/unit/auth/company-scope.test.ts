@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canSaveImportBatch,
   canRunImportPreview,
   resolveCurrentCompanyId,
   userCompanyAccessWhere,
@@ -59,6 +60,18 @@ describe('company scope helpers', () => {
     }
     for (const role of denied) {
       expect(canRunImportPreview(role)).toBe(false);
+    }
+  });
+
+  it('allows import save only for draft-save-capable roles', () => {
+    const allowed: AppRole[] = ['OWNER', 'ADMIN', 'STAFF', 'MEMBER'];
+    const denied: AppRole[] = ['REVIEWER', 'VIEWER'];
+
+    for (const role of allowed) {
+      expect(canSaveImportBatch(role)).toBe(true);
+    }
+    for (const role of denied) {
+      expect(canSaveImportBatch(role)).toBe(false);
     }
   });
 });
