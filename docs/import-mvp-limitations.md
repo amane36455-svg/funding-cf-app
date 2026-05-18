@@ -18,10 +18,16 @@ The MVP covers import preview through draft save. It does not confirm journal en
 - Ready rows only are saved as draft / candidate data.
 - `needs_review` rows are not saved.
 - Save button UI is available after preview and mapping.
+- Import draft cancel API is available at `POST /api/imports/:batchId/cancel`.
+- DRAFT import batches can be changed to `CANCELLED`.
+- Re-cancelling an already `CANCELLED` batch returns 200 as an idempotent success.
+- Cancelling a batch does not delete `journal_entries` or `journal_entry_lines`.
+- `journal_entries.status` remains `DRAFT` after batch cancellation.
+- Other-company batch IDs return 404.
 - `companyId` is resolved only from server-side `currentCompanyId`.
 - The client does not send `companyId`.
-- VIEWER and REVIEWER cannot run import preview or save import drafts.
-- OWNER, ADMIN, STAFF, and legacy MEMBER can run preview and save drafts.
+- VIEWER and REVIEWER cannot run import preview, save import drafts, or cancel import drafts.
+- OWNER, ADMIN, STAFF, and legacy MEMBER can run preview, save drafts, and cancel drafts.
 
 ## Current Limits
 
@@ -35,6 +41,7 @@ The MVP covers import preview through draft save. It does not confirm journal en
 - Numeric values in amount or unmapped columns are not treated as dates.
 - Import preview is rate limited on a best-effort in-memory basis.
 - Import draft save is rate limited on a best-effort in-memory basis.
+- Import draft cancel is rate limited on a best-effort in-memory basis.
 - Rate limits are per serverless instance and are not a strict global limit.
 - IP fallback keys are hashed; `RATE_LIMIT_HASH_SALT` may be configured, but its value must never be shared.
 - The saved data is a draft and is not a confirmed journal.
@@ -42,7 +49,7 @@ The MVP covers import preview through draft save. It does not confirm journal en
 ## Not Supported Yet
 
 - confirm API.
-- cancel API.
+- cancel UI.
 - update/delete API.
 - export.
 - storageRef implementation.
@@ -76,6 +83,7 @@ Saved data policy:
 
 - Do not paste real customer data into Issues, PRs, chat, Notion, or logs.
 - Do not paste uploaded file contents into Issues, PRs, chat, Notion, or logs.
+- Do not paste `batchId` values into Issues, PRs, chat, Notion, or logs.
 - Do not output secrets, DB URLs, tokens, passwords, cookies, or API keys.
 - API responses should not include `companyId`, user IDs, role names, or file contents.
 - Runtime logs should not include file contents, customer data, secrets, DB URLs, tokens, passwords, or cookies.
@@ -90,8 +98,11 @@ Saved data policy:
 - The MVP has no cancel/delete UI yet.
 - Smoke test draft data may remain in the staging database.
 - Do not run manual `DELETE`, `ALTER`, or other ad hoc DB changes for cleanup.
-- Test draft cleanup should be handled after cancel/delete APIs are designed and implemented.
-- Until cancel/delete exists, staging smoke test records should be treated as known test residue.
+- Cancel is not a physical delete.
+- Cancel updates only `import_batches.status` to `CANCELLED`.
+- Cancel keeps related `journal_entries` and `journal_entry_lines`.
+- Test draft cleanup should use the cancel API where appropriate, not manual SQL.
+- Until cancel UI or import history exists, staging smoke test records may still require API-level cleanup.
 
 ## Operational Notes
 
@@ -102,13 +113,13 @@ Saved data policy:
 - If a row needs review, it should remain outside the saved draft until a future correction flow exists.
 - Import MVP does not make tax, accounting, financing, legal, or labor judgments.
 - Human review is required before any downstream confirmation or export workflow.
+- Cancelled batches must be excluded by downstream confirmed, display, and aggregation flows.
 
 ## Next Phase Candidates
 
-- cancel API.
+- cancel UI.
+- import history screen.
 - confirm API.
-- ImportPreviewClient client-side leakage audit.
-- import preview / save API rate limit.
 - `needs_review` actionable UI.
 - raw value and normalized value side-by-side UI.
 - export flow.
