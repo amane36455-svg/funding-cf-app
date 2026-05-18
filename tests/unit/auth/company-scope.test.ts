@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canCancelImportBatch,
   canSaveImportBatch,
   canRunImportPreview,
   resolveCurrentCompanyId,
@@ -72,6 +73,18 @@ describe('company scope helpers', () => {
     }
     for (const role of denied) {
       expect(canSaveImportBatch(role)).toBe(false);
+    }
+  });
+
+  it('allows import cancel only for draft-cancel-capable roles', () => {
+    const allowed: AppRole[] = ['OWNER', 'ADMIN', 'STAFF', 'MEMBER'];
+    const denied: AppRole[] = ['REVIEWER', 'VIEWER'];
+
+    for (const role of allowed) {
+      expect(canCancelImportBatch(role)).toBe(true);
+    }
+    for (const role of denied) {
+      expect(canCancelImportBatch(role)).toBe(false);
     }
   });
 });

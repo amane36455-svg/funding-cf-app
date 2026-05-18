@@ -36,6 +36,14 @@ export function canSaveImportBatch(role: AppRole): boolean {
   return IMPORT_SAVE_ALLOWED_ROLE_SET.has(role);
 }
 
+export const IMPORT_CANCEL_ALLOWED_ROLES = ['OWNER', 'ADMIN', 'STAFF', 'MEMBER'] as const;
+
+const IMPORT_CANCEL_ALLOWED_ROLE_SET = new Set<AppRole>(IMPORT_CANCEL_ALLOWED_ROLES);
+
+export function canCancelImportBatch(role: AppRole): boolean {
+  return IMPORT_CANCEL_ALLOWED_ROLE_SET.has(role);
+}
+
 export function userCompanyAccessWhere(userId: string, companyId: string) {
   return {
     userId_companyId: {

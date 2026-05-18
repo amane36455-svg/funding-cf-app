@@ -12,7 +12,7 @@ export interface RateLimiter {
   }>;
 }
 
-export type ImportRateLimitAction = 'preview' | 'save';
+export type ImportRateLimitAction = 'preview' | 'save' | 'cancel';
 
 export const IMPORT_RATE_LIMIT_MESSAGE =
   '一定時間内のファイル読み込み回数が上限に達しました。サーバーの混雑を防ぐため、約1分後に再度お試しください。';
@@ -23,6 +23,7 @@ export const IMPORT_RATE_LIMITS: Record<
 > = {
   preview: { actionName: 'import.preview', limit: 5, windowMs: 60_000 },
   save: { actionName: 'import.save', limit: 3, windowMs: 60_000 },
+  cancel: { actionName: 'import.cancel', limit: 10, windowMs: 60_000 },
 };
 
 type Bucket = {
