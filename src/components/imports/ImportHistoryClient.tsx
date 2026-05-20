@@ -31,10 +31,10 @@ type ApiResponse<T> =
   | { ok: false; code: string; message: string };
 
 const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'DRAFT', label: 'Draft' },
-  { value: 'NEEDS_REVIEW', label: 'Needs review' },
-  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'all', label: 'すべて' },
+  { value: 'DRAFT', label: '下書き' },
+  { value: 'NEEDS_REVIEW', label: '要確認' },
+  { value: 'CANCELLED', label: 'キャンセル済み' },
 ];
 
 const PAGE_SIZE = 20;
@@ -79,7 +79,7 @@ export function ImportHistoryClient() {
       } catch {
         if (!isActive) return;
         setData(null);
-        setError('Import history could not be loaded. Please try again later.');
+        setError('インポート履歴を読み込めませんでした。しばらくしてから再試行してください。');
       } finally {
         if (isActive) setIsLoading(false);
       }
@@ -107,7 +107,7 @@ export function ImportHistoryClient() {
       <section className="rounded-md border bg-white p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <label className="space-y-1 text-sm">
-            <span className="font-medium text-slate-700">Status</span>
+            <span className="font-medium text-slate-700">ステータス</span>
             <select
               value={status}
               onChange={(event) => updateStatus(event.target.value as StatusFilter)}
@@ -121,31 +121,31 @@ export function ImportHistoryClient() {
             </select>
           </label>
           <div className="text-sm text-slate-500">
-            {pagination.totalItems.toLocaleString()} batches / page {pagination.page}
+            {pagination.totalItems.toLocaleString()} 件 / {pagination.page} ページ
           </div>
         </div>
       </section>
 
       <section className="overflow-hidden rounded-md border bg-white">
         {isLoading ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-500">Loading import history...</div>
+          <div className="px-4 py-10 text-center text-sm text-slate-500">インポート履歴を読み込んでいます...</div>
         ) : error ? (
           <div className="px-4 py-10 text-center text-sm text-red-700">{error}</div>
         ) : batches.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-500">No import batches found.</div>
+          <div className="px-4 py-10 text-center text-sm text-slate-500">インポートバッチが見つかりませんでした。</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[840px] text-sm">
               <thead className="bg-slate-100 text-left">
                 <tr>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Total</th>
-                  <th className="px-4 py-3 text-right">Ready</th>
-                  <th className="px-4 py-3 text-right">Needs review</th>
-                  <th className="px-4 py-3 text-right">Skipped</th>
-                  <th className="px-4 py-3">Confirm</th>
-                  <th className="px-4 py-3">Actions</th>
+                  <th className="px-4 py-3">作成日時</th>
+                  <th className="px-4 py-3">ステータス</th>
+                  <th className="px-4 py-3 text-right">合計</th>
+                  <th className="px-4 py-3 text-right">取込可</th>
+                  <th className="px-4 py-3 text-right">要確認</th>
+                  <th className="px-4 py-3 text-right">スキップ</th>
+                  <th className="px-4 py-3">確定可否</th>
+                  <th className="px-4 py-3">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,16 +165,16 @@ export function ImportHistoryClient() {
                     <td className="px-4 py-3">
                       {batch.canConfirm ? (
                         <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                          Candidate
+                          確定可
                         </span>
                       ) : (
                         <span className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                          Not eligible
+                          対象外
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-slate-500">Actions are not available yet.</span>
+                      <span className="text-xs text-slate-500">操作は現在準備中です。</span>
                     </td>
                   </tr>
                 ))}
@@ -193,10 +193,10 @@ export function ImportHistoryClient() {
           disabled={!canGoPrevious}
           onClick={() => setPage((current) => Math.max(1, current - 1))}
         >
-          Previous
+          前へ
         </button>
         <div className="text-sm text-slate-500">
-          Page {pagination.page} of {Math.max(1, pagination.totalPages)}
+          {pagination.page} / {Math.max(1, pagination.totalPages)} ページ
         </div>
         <button
           type="button"
@@ -206,17 +206,16 @@ export function ImportHistoryClient() {
           disabled={!canGoNext}
           onClick={() => setPage((current) => current + 1)}
         >
-          Next
+          次へ
         </button>
       </nav>
 
       <section className="rounded-md border bg-slate-50 p-4 text-sm text-slate-600">
         <p>
-          Cancelled batches are shown for history, but they are not confirm candidates. Cancel is not a physical delete:
-          journal entries and lines remain as draft data.
+          キャンセル済みバッチは履歴として表示されますが、確定対象にはなりません。キャンセルは物理削除ではなく、仕訳エントリおよび明細は下書きデータとして残ります。
         </p>
         <p className="mt-2">
-          Do not share screenshots or copied values from this page unless the content is dummy data or fully redacted.
+          このページのスクリーンショットやコピーした値は、ダミーデータまたは完全に匿名化されていない限り共有しないでください。
         </p>
       </section>
     </div>
@@ -231,9 +230,9 @@ function StatusBadge({ status }: { status: ImportBatchStatus }) {
   };
 
   const labels: Record<ImportBatchStatus, string> = {
-    DRAFT: 'Draft',
-    NEEDS_REVIEW: 'Needs review',
-    CANCELLED: 'Cancelled',
+    DRAFT: '下書き',
+    NEEDS_REVIEW: '要確認',
+    CANCELLED: 'キャンセル済み',
   };
 
   return <span className={`rounded px-2 py-1 text-xs font-medium ${styles[status]}`}>{labels[status]}</span>;
