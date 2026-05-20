@@ -79,7 +79,7 @@ export function ImportHistoryClient() {
       } catch {
         if (!isActive) return;
         setData(null);
-        setError('インポート履歴を読み込めませんでした。しばらくしてから再試行してください。');
+        setError('取込履歴を読み込めませんでした。しばらくしてから再試行してください。');
       } finally {
         if (isActive) setIsLoading(false);
       }
@@ -121,18 +121,18 @@ export function ImportHistoryClient() {
             </select>
           </label>
           <div className="text-sm text-slate-500">
-            {pagination.totalItems.toLocaleString()} 件 / {pagination.page} ページ
+            全 {pagination.totalItems.toLocaleString()} 件・{pagination.page} ページ目
           </div>
         </div>
       </section>
 
       <section className="overflow-hidden rounded-md border bg-white">
         {isLoading ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-500">インポート履歴を読み込んでいます...</div>
+          <div className="px-4 py-10 text-center text-sm text-slate-500">取込履歴を読み込んでいます...</div>
         ) : error ? (
           <div className="px-4 py-10 text-center text-sm text-red-700">{error}</div>
         ) : batches.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-500">インポートバッチが見つかりませんでした。</div>
+          <div className="px-4 py-10 text-center text-sm text-slate-500">取込バッチが見つかりませんでした。</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[840px] text-sm">
@@ -141,7 +141,7 @@ export function ImportHistoryClient() {
                   <th className="px-4 py-3">作成日時</th>
                   <th className="px-4 py-3">ステータス</th>
                   <th className="px-4 py-3 text-right">合計</th>
-                  <th className="px-4 py-3 text-right">取込可</th>
+                  <th className="px-4 py-3 text-right">保存済み</th>
                   <th className="px-4 py-3 text-right">要確認</th>
                   <th className="px-4 py-3 text-right">スキップ</th>
                   <th className="px-4 py-3">確定可否</th>
